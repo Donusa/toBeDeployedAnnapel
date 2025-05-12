@@ -1,0 +1,71 @@
+/* You can add global styles to this file, and also import other style files */
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+@import '~@angular/material/prebuilt-themes/indigo-pink.css';
+
+.mat-mdc-form-field.mat-focused .mat-mdc-form-field-label,
+.mat-mdc-form-field.mat-focused .mat-mdc-form-field-ripple,
+.mat-mdc-form-field.mat-focused .mat-mdc-form-field-outline-thick,
+.mat-mdc-form-field.mat-focused .mat-mdc-form-field-icon {
+  color: #464db3 !important;
+}
+
+.mat-mdc-form-field .mat-input-element:focus {
+  border-color: #464db3 !important; 
+}
+
+
+.success-snackbar {
+  background-color: #007bff !important;
+  color: white !important;
+}
+
+.success-snackbar .mat-simple-snackbar-action {
+  color: white !important;
+}
+
+.error-snackbar {
+  background-color: #dc3545 !important;
+  color: white !important;
+}
+
+.error-snackbar .mat-simple-snackbar-action {
+  color: white !important;
+}
+
+.mat-simple-snackbar-action {
+  color: white !important;
+}
+
+/* Mobile Global Styles */
+@media (max-width: 576px) {
+  .mobile-fab-button {
+    position: fixed !important;
+    bottom: 16px !important;
+    right: 16px !important;
+    z-index: 1000 !important;
+  }
+
+  .mat-mdc-table {
+    width: 100% !important;
+  }
+
+  .mat-mdc-cell,
+  .mat-mdc-header-cell {
+    padding: 12px 8px !important;
+  }
+
+  .mat-mdc-header-cell {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+  }
+
+  .mat-mdc-cell {
+    font-size: 14px !important;
+  }
+
+  .mat-mdc-paginator {
+    margin-top: 16px !important;
+  }
+}

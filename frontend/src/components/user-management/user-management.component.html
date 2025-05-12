@@ -1,0 +1,65 @@
+<div class="container" *ngIf="isAdmin">
+  <div class="header">
+    <div class="header-left">
+      <button mat-icon-button (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h2>Gestión de Usuarios</h2>
+    </div>
+    <button mat-raised-button style="background-color: #333333; color: white;" (click)="openAddDialog()">
+      <mat-icon>add</mat-icon> Nuevo Usuario
+    </button>
+  </div>
+
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Buscar usuario</mat-label>
+    <input matInput (keyup)="applyFilter($event)" placeholder="Buscar por nombre, email o rol" #input>
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
+
+  <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+    <ng-container matColumnDef="name">
+      <mat-header-cell *matHeaderCellDef> Nombre </mat-header-cell>
+      <mat-cell *matCellDef="let element"> {{element.username}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="email">
+      <mat-header-cell *matHeaderCellDef> Email </mat-header-cell>
+      <mat-cell *matCellDef="let element"> {{element.email}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="role">
+      <mat-header-cell *matHeaderCellDef> Rol </mat-header-cell>
+      <mat-cell *matCellDef="let element">{{element.role}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="commissionPercentage">
+      <mat-header-cell *matHeaderCellDef> Comisión (%) </mat-header-cell>
+      <mat-cell *matCellDef="let element"> {{element.commissionPercentage}}</mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <mat-header-cell *matHeaderCellDef> Acciones </mat-header-cell>
+      <mat-cell *matCellDef="let element">
+        <button mat-icon-button color="primary" (click)="openEditDialog(element)" matTooltip="Editar usuario">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="deleteUser(element.id)" matTooltip="Eliminar usuario">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-cell>
+    </ng-container>
+
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell" colspan="5">No se encontraron usuarios que coincidan con el filtro "{{input.value}}"</td>
+    </tr>
+  </mat-table>
+</div>
+
+<div class="unauthorized-message" *ngIf="!isAdmin">
+  <h3>Acceso No Autorizado</h3>
+  <p>No tienes permisos para acceder a esta sección.</p>
+</div>

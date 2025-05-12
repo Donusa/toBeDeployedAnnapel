@@ -1,0 +1,112 @@
+<div class="container">
+  <div class="header">
+    <div class="header-left">
+      <button mat-icon-button (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h2>Gestión de Pedidos</h2>
+    </div>
+    <button mat-raised-button style="background-color: #333333; color: white;" (click)="openAddDialog()">
+      <mat-icon>add</mat-icon> Nuevo Pedido
+    </button>
+  </div>
+
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Buscar pedidos</mat-label>
+    <input matInput (keyup)="applyFilter($event)" placeholder="Buscar por cliente" #input>
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
+
+  <div class="filter-actions" *ngIf="dataSource.filter">
+    <span>Filtro aplicado: 
+      <strong *ngIf="currentFilterColumn === 'delivered'">Entregados</strong>
+      <strong *ngIf="currentFilterColumn === 'paid'">Pagados</strong>
+      <strong *ngIf="currentFilterColumn === 'amountDue'">Con deuda</strong>
+      <strong *ngIf="currentFilterColumn === 'orderDate'">Pedidos de hoy</strong>
+    </span>
+    <button mat-button color="primary" (click)="clearFilters()">
+      <mat-icon>clear</mat-icon> Limpiar filtros
+    </button>
+  </div>
+
+  <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8">
+    
+    <ng-container matColumnDef="clientName">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Cliente </th>
+      <td mat-cell *matCellDef="let element"> {{element.client.name}} </td>
+    </ng-container>
+    
+    <ng-container matColumnDef="deliveryDate">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Fecha de Entrega </th>
+      <td mat-cell *matCellDef="let element"> {{element.deliveryDate | date:'dd/MM/yyyy'}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="orderDate">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header (click)="applyColumnFilter('orderDate')"> Fecha de Pedido <mat-icon *ngIf="currentFilterColumn !== 'orderDate'" class="filter-icon">filter_list</mat-icon><mat-icon *ngIf="currentFilterColumn === 'orderDate'" class="filter-icon active">filter_list</mat-icon></th>
+      <td mat-cell *matCellDef="let element"> {{element.orderDate | date:'dd/MM/yyyy'}} </td>
+    </ng-container>
+    
+    <ng-container matColumnDef="shippingMethod">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Método de Envío </th>
+      <td mat-cell *matCellDef="let element"> {{element.shippingMethod === 'DELIVERY' ? 'Envío' : 'Retiro'}} </td>
+    </ng-container>
+    
+    <ng-container matColumnDef="amountDue">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header (click)="applyColumnFilter('amountDue')"> Deuda <mat-icon *ngIf="currentFilterColumn !== 'amountDue'" class="filter-icon">filter_list</mat-icon><mat-icon *ngIf="currentFilterColumn === 'amountDue'" class="filter-icon active">filter_list</mat-icon></th>
+      <td mat-cell *matCellDef="let element"> ${{element.client.currentAccount}} </td>
+    </ng-container>
+
+    <ng-container matColumnDef="paymentMethod">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Método de Pago </th>
+      <td mat-cell *matCellDef="let element"> {{
+        element.paymentMethod.name === 'CASH' ? 'Efectivo' : 
+        element.paymentMethod.name === 'CARD' ? 'Tarjeta' : 
+        element.paymentMethod.name === 'TRANSFER'? 'Transferencia' : element.paymentMethod.name}}
+      </td>
+    </ng-container>
+    
+    <ng-container matColumnDef="paid">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header (click)="applyColumnFilter('paid')"> Pagado <mat-icon *ngIf="currentFilterColumn !== 'paid'" class="filter-icon">filter_list</mat-icon><mat-icon *ngIf="currentFilterColumn === 'paid'" class="filter-icon active">filter_list</mat-icon></th>
+      <td mat-cell *matCellDef="let element">
+        <mat-icon [ngStyle]="{'color': element.paid ? 'green' : 'red'}">
+          {{element.paid ? 'check_circle' : 'cancel'}}
+        </mat-icon>
+      </td>
+    </ng-container>
+    
+    <ng-container matColumnDef="delivered">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header (click)="applyColumnFilter('delivered')"> Entregado <mat-icon *ngIf="currentFilterColumn !== 'delivered'" class="filter-icon">filter_list</mat-icon><mat-icon *ngIf="currentFilterColumn === 'delivered'" class="filter-icon active">filter_list</mat-icon></th>
+      <td mat-cell *matCellDef="let element">
+        <mat-icon [ngStyle]="{'color': element.delivered ? 'green' : 'red'}">
+          {{element.delivered ? 'check_circle' : 'cancel'}}
+        </mat-icon>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="seller">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> Vendedor </th>
+      <td mat-cell *matCellDef="let element"> {{element.seller.username}} </td>
+    </ng-container>
+    
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef>Acciones</th>
+      <td mat-cell *matCellDef="let order">
+        <button mat-icon-button color="primary" (click)="openViewDialog(order)" matTooltip="Ver detalles">
+          <mat-icon>visibility</mat-icon>
+        </button>
+        <button mat-icon-button color="accent" (click)="openEditDialog(order)" matTooltip="Editar">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="deleteOrder(order.id)" matTooltip="Eliminar">
+          <mat-icon>delete</mat-icon>
+        </button>
+        <button mat-icon-button color="primary" (click)="printTicket(order.id)" matTooltip="Imprimir ticket">
+          <mat-icon>receipt</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+    
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+</div>

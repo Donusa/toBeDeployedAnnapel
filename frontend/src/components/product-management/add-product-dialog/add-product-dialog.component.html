@@ -1,0 +1,69 @@
+<h2 mat-dialog-title>Nuevo Producto</h2>
+
+<div mat-dialog-content class="dialog-content-spacing">
+<form [formGroup]="productForm" (ngSubmit)="onSubmit()">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="name" required>
+      <mat-error *ngIf="productForm.get('name')?.hasError('required')">El nombre es requerido</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Formol</mat-label>
+      <input matInput type="number" formControlName="formaldehydePercentage" required>
+      <mat-error *ngIf="productForm.get('formaldehydePercentage')?.hasError('required')">El porcentaje de formol es requerido</mat-error>
+      <mat-error *ngIf="productForm.get('formaldehydePercentage')?.hasError('min')">El porcentaje debe ser mayor a 0</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Precio</mat-label>
+      <input matInput type="number" formControlName="price" required>
+      <mat-error *ngIf="productForm.get('price')?.hasError('required')">El precio es requerido</mat-error>
+      <mat-error *ngIf="productForm.get('price')?.hasError('min')">El precio debe ser mayor a 0</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Costo</mat-label>
+      <input matInput type="number" formControlName="cost" required>
+      <mat-error *ngIf="productForm.get('cost')?.hasError('required')">El costo es requerido</mat-error>
+      <mat-error *ngIf="productForm.get('cost')?.hasError('min')">El costo debe ser mayor a 0</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Tipo</mat-label>
+      <input matInput formControlName="type" required>
+      <mat-error *ngIf="productForm.get('type')?.hasError('required')">El tipo es requerido</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Código</mat-label>
+      <input matInput formControlName="code" required>
+      <mat-error *ngIf="productForm.get('code')?.hasError('required')">El código es requerido</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Tamaño</mat-label>
+      <input matInput formControlName="size" required>
+      <mat-error *ngIf="productForm.get('size')?.hasError('required')">El tamaño es requerido</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Stock</mat-label>
+      <input matInput type="number" formControlName="currentStock" required>
+      <mat-error *ngIf="productForm.get('currentStock')?.hasError('required')">El stock es requerido</mat-error>
+      <mat-error *ngIf="productForm.get('currentStock')?.hasError('min')">El stock debe ser mayor o igual a 0</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Stock Minimo</mat-label>
+      <input matInput type="number" formControlName="minimumStock" required>
+      <mat-error *ngIf="productForm.get('minimumStock')?.hasError('required')">El stock mínimo es requerido</mat-error>
+      <mat-error *ngIf="productForm.get('minimumStock')?.hasError('min')">El stock mínimo debe ser mayor o igual a 0</mat-error>
+    </mat-form-field>
+    </form>
+  </div>
+
+<div mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Cancelar</button>
+    <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="!productForm.valid">Guardar</button>
+</div>

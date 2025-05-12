@@ -1,0 +1,107 @@
+<h2 mat-dialog-title>Agregar Pedido</h2>
+
+<mat-dialog-content class="dialog-scroll">
+  <form [formGroup]="orderForm" (ngSubmit)="onSubmit()">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Cliente</mat-label>
+      <input type="text"
+             placeholder="Buscar cliente"
+             matInput
+             [matAutocomplete]="autoClient"
+             [formControl]="clientSearchControl">
+      <mat-autocomplete #autoClient="matAutocomplete" [displayWith]="displayClientFn">
+        <mat-option *ngFor="let client of filteredClients | async" [value]="client">
+          {{client.name}}
+        </mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
+
+    <div formArrayName="products">
+      <div *ngFor="let productForm of productForms.controls; let i=index" [formGroupName]="i" class="product-row">
+        <mat-form-field appearance="outline" class="product-select">
+          <mat-label>Producto</mat-label>
+          <input type="text"
+                 placeholder="Buscar producto"
+                 matInput
+                 [matAutocomplete]="autoProduct"
+                 [formControl]="getProductSearchControl(i)">
+          <mat-autocomplete #autoProduct="matAutocomplete" [displayWith]="displayProductFn">
+            <mat-option *ngFor="let product of filteredProducts[i] | async" [value]="product">
+              {{product.name}} (Stock: {{product.currentStock}})
+            </mat-option>
+          </mat-autocomplete>
+          <mat-error *ngIf="productForm.get('productId')?.errors?.['duplicateProduct']">
+            Este producto ya fue agregado al pedido
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="quantity-input">
+          <mat-label>Cantidad</mat-label>
+          <input matInput type="number" formControlName="quantity" min="1">
+          <mat-error *ngIf="productForm.get('quantity')?.errors?.['stockExceeded']">
+            La cantidad excede el stock disponible
+          </mat-error>
+        </mat-form-field>
+
+        <button type="button" mat-icon-button class="delete-product-btn" (click)="removeProduct(i)" *ngIf="productForms.length > 1">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <button mat-button type="button" (click)="addProduct()" class="add-product-btn" [disabled]="!hasAvailableProducts()">
+      <mat-icon>add</mat-icon> Agregar Producto
+    </button>
+    <div *ngIf="!hasAvailableProducts()" class="no-products-message">
+      No hay más productos disponibles para agregar
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Fecha de Entrega</mat-label>
+      <input matInput [matDatepicker]="picker" [min]="minDate" formControlName="deliveryDate">
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Método de envío</mat-label>
+      <mat-select formControlName="shippingMethod">
+        <mat-option value="RETIRA_SIN_COSTO">Retira sin costo</mat-option>
+        <mat-option value="ENVIO_DOMICILIO">Envío a domicilio</mat-option>
+        <mat-option value="ENVIO_CORREO">Envío por correo</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Método de pago</mat-label>
+      <mat-select formControlName="paymentMethodId">
+        <mat-option [value]="0">Efectivo</mat-option>
+        <mat-option [value]="1">Tarjeta</mat-option>
+        <mat-option [value]="2">Transferencia</mat-option>
+      </mat-select>
+        <mat-error *ngIf="orderForm.get('paymentMethod')?.hasError('required')">
+          El método de pago es requerido
+        </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width" *ngIf="orderForm.get('shippingMethod')?.value === 'ENVIO_DOMICILIO' || orderForm.get('shippingMethod')?.value === 'ENVIO_CORREO'">
+      <mat-label>Costo de envío</mat-label>
+      <input matInput type="number" formControlName="shippingCost" min="0">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>A pagar</mat-label>
+      <textarea matInput formControlName="amountDue"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <div class="validation-error" *ngIf="orderForm.errors?.['noProducts']">
+    Debe seleccionar al menos un producto válido
+  </div>
+  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="!orderForm.valid">
+    Guardar
+  </button>
+</mat-dialog-actions>

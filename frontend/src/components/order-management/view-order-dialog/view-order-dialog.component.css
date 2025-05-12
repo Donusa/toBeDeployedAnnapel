@@ -1,0 +1,32 @@
+.dialog-content {
+  padding: 20px;
+  max-height: 80vh;
+  overflow-y: hidden;
+}
+
+.order-details {
+  margin-bottom: 20px;
+}
+
+h3 {
+  color: #333;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.products-list {
+  margin-top: 10px;
+}
+
+.product-item {
+  padding: 10px;
+  border: 1px solid #eee;
+  margin-bottom: 10px;
+  border-radius: 4px;
+}
+
+.product-item p {
+  margin: 5px 0;
+}

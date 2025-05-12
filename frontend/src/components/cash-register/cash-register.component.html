@@ -1,0 +1,76 @@
+<div class="container">
+  <div class="header">
+    <div class="header-left">
+      <button mat-icon-button (click)="goToHome()" class="back-button">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h2>Caja Diaria</h2>
+    </div>
+  </div>
+
+  <div *ngIf="isAdmin" class="summary-cards">
+    <mat-card class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Total Ventas del Día</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <h3>{{totalDailySales | currency}}</h3>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Total Comisiones</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <h3>{{totalCommissions | currency}}</h3>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div *ngIf="isAdmin" class="commission-table">
+    <h3>Comisiones por Usuario</h3>
+    <p class="table-hint">Haga clic en una fila para ver los detalles de ventas</p>
+    <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+      <ng-container matColumnDef="user">
+        <mat-header-cell *matHeaderCellDef> Usuario </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{element.user}} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="sales">
+        <mat-header-cell *matHeaderCellDef> Ventas </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{element.sales | currency}} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="commission">
+        <mat-header-cell *matHeaderCellDef> Comisión </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{element.commission | currency}} </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns;" (click)="openSalesDetailsDialog(row)" class="clickable-row"></mat-row>
+    </mat-table>
+  </div>
+
+  <div *ngIf="!isAdmin" class="user-commission">
+    <div class="summary-cards">
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-card-title>Tus Ventas del Día</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <h3>{{userSales | currency}}</h3>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-header>
+          <mat-card-title>Tu Comisión del Día</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <h3>{{userCommission | currency}}</h3>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

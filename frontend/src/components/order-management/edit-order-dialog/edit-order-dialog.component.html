@@ -1,0 +1,114 @@
+<h2 mat-dialog-title>Editar Pedido</h2>
+
+<mat-dialog-content class="dialog-content">
+  <form [formGroup]="orderForm" (ngSubmit)="onSubmit()">
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Cliente</mat-label>
+        <input type="text"
+               matInput
+               [matAutocomplete]="autoClient"
+               [formControl]="clientSearchControl"
+               placeholder="Buscar cliente">
+        <mat-autocomplete #autoClient="matAutocomplete" [displayWith]="displayClientFn">
+          <mat-option *ngFor="let client of filteredClients | async" [value]="client">
+            {{client.name}}
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+    </div>
+
+    <div formArrayName="products">
+      <div *ngFor="let productForm of productForms.controls; let i=index" [formGroupName]="i" class="product-row">
+        <mat-form-field appearance="outline" class="product-select">
+          <mat-label>Producto</mat-label>
+          <input type="text"
+                 matInput
+                 [matAutocomplete]="autoProduct"
+                 [formControl]="getProductSearchControl(i)"
+                 placeholder="Buscar producto">
+          <mat-autocomplete #autoProduct="matAutocomplete" [displayWith]="displayProductFn">
+            <mat-option *ngFor="let product of filteredProducts[i] | async" [value]="product">
+              {{product.name}} (Stock: {{product.currentStock}})
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="quantity-field">
+          <mat-label>Cantidad</mat-label>
+          <input matInput type="number" formControlName="quantity" min="1">
+        </mat-form-field>
+
+        <button mat-icon-button color="warn" type="button" (click)="removeProduct(i)" *ngIf="productForms.length > 1">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="add-product-section">
+      <button mat-button type="button" (click)="addProduct()" class="add-product-button" [disabled]="!hasAvailableProducts()">
+        <mat-icon>add</mat-icon> Agregar Producto
+      </button>
+      <mat-hint class="no-products-hint" *ngIf="!hasAvailableProducts()">
+        No hay más productos disponibles para agregar
+      </mat-hint>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Fecha de Entrega</mat-label>
+        <input matInput [matDatepicker]="picker" [min]="minDate" formControlName="deliveryDate">
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Método de Envío</mat-label>
+        <mat-select formControlName="shippingMethod">
+          <mat-option *ngFor="let method of shippingMethods" [value]="method">
+            {{method === 'RETIRA_SIN_COSTO' ? 'Retira' : 
+              method === 'ENVIO_DOMICILIO' ? 'Envío a domicilio' : 
+              method === 'ENVIO_CORREO' ? 'Envío por correo' : method}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Costo de Envío</mat-label>
+        <input matInput type="number" formControlName="shippingCost">
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Método de Pago</mat-label>
+        <mat-select formControlName="paymentMethod">
+          <mat-option value="CASH">Efectivo</mat-option>
+          <mat-option value="CARD">Tarjeta</mat-option>
+          <mat-option value="TRANSFER">Transferencia</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>A pagar</mat-label>
+        <input style="padding-bottom: 0;" matInput type="number" formControlName="amountDue">
+      </mat-form-field>
+    </div>
+
+    <div class="form-row checkbox-row">
+      <mat-checkbox formControlName="delivered">Entregado</mat-checkbox>
+      <mat-checkbox formControlName="paid">Pagado</mat-checkbox>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()">Guardar</button>
+</mat-dialog-actions>

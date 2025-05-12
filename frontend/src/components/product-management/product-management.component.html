@@ -1,0 +1,81 @@
+<div class="container">
+  <div class="header">
+    <div class="header-left">
+      <button mat-icon-button (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h2>Gestión de Productos</h2>
+    </div>
+    <button mat-raised-button style="background-color: #333333; color: white;" (click)="openAddDialog()">
+      <mat-icon>add</mat-icon> Nuevo Producto
+    </button>
+  </div>
+
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Buscar producto</mat-label>
+    <input matInput (keyup)="applyFilter($event)" placeholder="Buscar por nombre, código o tipo" #input>
+    <mat-icon matSuffix>search</mat-icon>
+  </mat-form-field>
+
+  <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+    <ng-container matColumnDef="name">
+      <mat-header-cell *matHeaderCellDef> Nombre </mat-header-cell>
+      <mat-cell *matCellDef="let element"> {{element.name}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="formaldehydePercentage">
+      <mat-header-cell *matHeaderCellDef> Formol % </mat-header-cell>
+      <mat-cell *matCellDef="let element"> {{element.formaldehydePercentage}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="price">
+      <mat-header-cell *matHeaderCellDef> Precio </mat-header-cell>
+      <mat-cell *matCellDef="let element" class="text-right"> ${{element.price | number:'1.2-2'}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="cost">
+      <mat-header-cell *matHeaderCellDef> Costo </mat-header-cell>
+      <mat-cell *matCellDef="let element" class="text-right"> ${{element.cost | number:'1.2-2'}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="type">
+      <mat-header-cell *matHeaderCellDef> Tipo </mat-header-cell>
+      <mat-cell *matCellDef="let element"> {{element.type}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="code">
+      <mat-header-cell *matHeaderCellDef> Código </mat-header-cell>
+      <mat-cell *matCellDef="let element"> {{element.code}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="size">
+      <mat-header-cell *matHeaderCellDef> Tamaño </mat-header-cell>
+      <mat-cell *matCellDef="let element"> {{element.size}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="currentStock">
+      <mat-header-cell *matHeaderCellDef> Stock </mat-header-cell>
+      <mat-cell *matCellDef="let element" class="text-center"> {{element.currentStock}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="minimumStock">
+      <mat-header-cell *matHeaderCellDef> Stock Mínimo </mat-header-cell>
+      <mat-cell *matCellDef="let element" class="text-center"> {{element.minimumStock}} </mat-cell>
+    </ng-container>
+
+    <ng-container matColumnDef="actions">
+      <mat-header-cell *matHeaderCellDef> Acciones </mat-header-cell>
+      <mat-cell *matCellDef="let element">
+        <button mat-icon-button color="primary" (click)="openEditDialog(element)">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="deleteProduct(element.id)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-cell>
+    </ng-container>
+
+    <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+  </mat-table>
+</div>

@@ -1,0 +1,153 @@
+<div class="home-container">
+  <mat-sidenav-container>
+    <mat-sidenav #sidenav mode="over">
+      <mat-nav-list>
+        <div class="sidenav-header">
+          <div class="user-info">
+            <h3>{{username}}</h3>
+            <span>{{userEmail}}</span>
+          </div>
+        </div>
+        <mat-divider></mat-divider>
+        <a mat-list-item routerLink="/users" *ngIf="isAdmin">
+          <mat-icon>admin_panel_settings</mat-icon>
+          <span>Gestión de Usuarios</span>
+        </a>
+        <a mat-list-item routerLink="/product-management">
+          <mat-icon>inventory_2</mat-icon>
+          <span>Productos</span>
+        </a>
+        <a mat-list-item routerLink="/customer-management">
+          <mat-icon>people</mat-icon>
+          <span>Clientes</span>
+        </a>
+        <a mat-list-item routerLink="/order-management">
+          <mat-icon>shopping_bag</mat-icon>
+          <span>Pedidos</span>
+        </a>
+        <a mat-list-item routerLink="/cash-register">
+          <mat-icon>point_of_sale</mat-icon>
+          <span>Caja</span>
+        </a>
+        
+        <mat-divider></mat-divider>
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+      <div class="web-content">
+        <div class="dashboard-header">
+          <div class="header-content">
+            <h1>Anna-Pel</h1>
+            <button mat-icon-button [matMenuTriggerFor]="profileMenu" class="profile-button">
+              <mat-icon>account_circle</mat-icon>
+            </button>
+            <mat-menu #profileMenu="matMenu">
+              <div class="menu-user-info">
+                <span class="username">{{username}}</span>
+                <span class="user-role">{{userEmail}}</span>
+              </div>
+              <mat-divider></mat-divider>
+              <button mat-menu-item (click)="logout()">
+                <mat-icon>exit_to_app</mat-icon>
+                <span>Cerrar Sesión</span>
+              </button>
+            </mat-menu>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <mat-card class="dashboard-card" *ngIf="isAdmin">
+            <mat-card-header>
+              <mat-icon>admin_panel_settings</mat-icon>
+              <mat-card-title>Gestión de Usuarios</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <p>Administración de usuarios y roles</p>
+              <ul class="feature-list">
+              </ul>
+            </mat-card-content>
+            <mat-card-actions>
+              <button mat-raised-button color="primary" routerLink="/users">
+                <mat-icon>manage_accounts</mat-icon>
+                Administrar Usuarios
+              </button>
+            </mat-card-actions>
+          </mat-card>
+
+          <mat-card class="dashboard-card">
+            <mat-card-header>
+              <mat-icon>inventory_2</mat-icon>
+              <mat-card-title>Productos</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <p>Gestión completa del inventario</p>
+              <ul class="feature-list">
+              </ul>
+            </mat-card-content>
+            <mat-card-actions>
+              <button mat-raised-button color="primary" routerLink="/product-management">
+                <mat-icon>edit</mat-icon>
+                Gestionar Productos
+              </button>
+            </mat-card-actions>
+          </mat-card>
+
+          <mat-card class="dashboard-card">
+            <mat-card-header>
+              <mat-icon>people</mat-icon>
+              <mat-card-title>Clientes</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <p>Gestión de la cartera de clientes</p>
+              <ul class="feature-list">
+              </ul>
+            </mat-card-content>
+            <mat-card-actions>
+              <button mat-raised-button color="primary" routerLink="/customer-management">
+                <mat-icon>person_add</mat-icon>
+                Gestionar Clientes
+              </button>
+            </mat-card-actions>
+          </mat-card>
+
+          <mat-card class="dashboard-card">
+            <mat-card-header>
+              <mat-icon>shopping_bag</mat-icon>
+              <mat-card-title>Pedidos</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <p>Control de pedidos y ventas</p>
+              <ul class="feature-list">
+              </ul>
+            </mat-card-content>
+            <mat-card-actions>
+              <button mat-raised-button color="primary" routerLink="/orders">
+                <mat-icon>add_shopping_cart</mat-icon>
+                Gestionar Pedidos
+              </button>
+            </mat-card-actions>
+          </mat-card>
+
+          <mat-card class="dashboard-card">
+            <mat-card-header>
+              <mat-icon>point_of_sale</mat-icon>
+              <mat-card-title>Caja</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <p>Resumen financiero diario</p>
+              <ul class="feature-list">
+              </ul>
+            </mat-card-content>
+            <mat-card-actions>
+              <button mat-raised-button color="primary" routerLink="/cash-register">
+                <mat-icon>analytics</mat-icon>
+                Ver Resumen
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

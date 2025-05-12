@@ -1,0 +1,43 @@
+<h2 mat-dialog-title>Detalles del Pedido #{{data.id}}</h2>
+
+<mat-dialog-content class="dialog-content">
+  <div class="order-details">
+    <h3>Información del Cliente</h3>
+    <p><strong>Nombre:</strong> {{data.client.name}}</p>
+    <p><strong>Teléfono:</strong> {{data.client.phone}}</p>
+    <p><strong>Dirección:</strong> {{data.client.address}}</p>
+
+    <h3>Información del Pedido</h3>
+    <p><strong>Fecha de Pedido:</strong> {{data.orderDate | date:'dd/MM/yyyy'}}</p>
+    <p><strong>Fecha de Entrega:</strong> {{data.deliveryDate | date:'dd/MM/yyyy'}}</p>
+    <p><strong>Estado de Entrega:</strong> {{data.delivered ? 'Entregado' : 'Pendiente'}}</p>
+    <p><strong>Estado de Pago:</strong> {{data.paid ? 'Pagado' : 'Pendiente'}}</p>
+    <p><strong>Método de Pago:</strong> {{
+        data.paymentMethod.name === 'CASH' ? 'Efectivo' :
+        data.paymentMethod.name === 'CARD'? 'Tarjeta' :
+        data.paymentMethod.name === 'TRANSFER'? 'Transferencia' :
+        data.paymentMethod.name
+    }}</p>
+    <p><strong>Método de Envío:</strong> {{
+        data.shippingMethod === 'RETIRA_SIN_COSTO' ? 'Retira en el local sin costo' :
+        data.shippingMethod === 'ENVIO_DOMICILIO' ? 'Envío a domicilio con costo' :
+        data.shippingMethod === 'ENVIO_CORREO' ? 'Envío por correo con costo' :
+        data.shippingMethod
+    }}</p>
+    <p><strong>Costo de Envío:</strong> ${{data.shippingCost}}</p>
+    <p><strong>Monto Total:</strong> ${{data.amountDue}}</p>
+
+    <h3>Productos</h3>
+    <div class="products-list">
+      <div *ngFor="let item of data.orderItems" class="product-item">
+        <p><strong>{{item.product.name}}</strong></p>
+        <p>Cantidad: {{item.quantity}}</p>
+        <p>Precio unitario: ${{item.product.price}}</p>
+      </div>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onClose()">Cerrar</button>
+</mat-dialog-actions>

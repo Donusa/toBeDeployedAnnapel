@@ -1,0 +1,49 @@
+<h2 mat-dialog-title>Detalles de Ventas - {{sellerName}}</h2>
+
+<mat-dialog-content class="dialog-content">
+  <div class="sales-summary">
+    <h3>Ventas Totales: {{totalSales | currency}}</h3>
+  </div>
+
+  <div class="orders-table">
+    <h3>Pedidos del Día</h3>
+    <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+      <ng-container matColumnDef="id">
+        <mat-header-cell *matHeaderCellDef> # </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{element.id}} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="clientName">
+        <mat-header-cell *matHeaderCellDef> Cliente </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{element.client.name}} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="orderDate">
+        <mat-header-cell *matHeaderCellDef> Fecha </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{element.orderDate | date:'dd/MM/yyyy'}} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="amountDue">
+        <mat-header-cell *matHeaderCellDef> Monto </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{element.amountDue | currency}} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="paymentMethod">
+        <mat-header-cell *matHeaderCellDef> Método de Pago </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{
+          element.paymentMethod.name === 'CASH' ? 'Efectivo' :
+          element.paymentMethod.name === 'CARD'? 'Tarjeta' :
+          element.paymentMethod.name === 'TRANSFER'? 'Transferencia' :
+          element.paymentMethod.name
+        }} </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
+    </mat-table>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onClose()">Cerrar</button>
+</mat-dialog-actions>

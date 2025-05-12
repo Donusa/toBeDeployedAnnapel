@@ -1,0 +1,72 @@
+<div class="page-container">
+  <div class="container">
+    <mat-card class="form-card">
+      <mat-card-title>¡Bienvenido!</mat-card-title>
+      <mat-card-content>
+        <form (ngSubmit)="onSubmit()" #loginForm="ngForm" autocomplete="off">
+          <mat-form-field appearance="outline">
+            <mat-label>Usuario</mat-label>
+            <input 
+              matInput 
+              type="text" 
+              [(ngModel)]="username" 
+              name="username" 
+              placeholder="Ingrese su usuario" 
+              required
+              #usernameInput="ngModel"
+              autocomplete="off">
+            <mat-icon matSuffix>account_circle</mat-icon>
+            <mat-error *ngIf="usernameInput.invalid && usernameInput.touched">
+              Por favor, ingrese su usuario
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Contraseña</mat-label>
+            <input 
+              matInput 
+              [type]="hidePassword ? 'password' : 'text'"
+              [(ngModel)]="password" 
+              name="password" 
+              required
+              #passwordInput="ngModel"
+              (keypress)="checkCapsLock($event)"
+              autocomplete="new-password">
+            <mat-icon matSuffix (click)="hidePassword = !hidePassword" 
+                      [attr.aria-label]="hidePassword ? 'Mostrar contraseña' : 'Ocultar contraseña'"
+                      style="cursor: pointer">
+              {{hidePassword ? 'visibility_off' : 'visibility'}}
+            </mat-icon>
+            <mat-error *ngIf="passwordInput.invalid && passwordInput.touched">
+              La contraseña es requerida
+            </mat-error>
+            <mat-hint *ngIf="capsLockOn" class="caps-lock-warning">
+              <mat-icon class="warning-icon">warning</mat-icon>
+              Bloq Mayús activado
+            </mat-hint>
+          </mat-form-field>
+
+          <div *ngIf="error" class="error-message" role="alert">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{error}}</span>
+          </div>
+
+          <button 
+            mat-raised-button 
+            color="primary" 
+            type="submit"
+            class="submit-button"
+            [disabled]="loginForm.invalid">
+            Iniciar sesión
+          </button>
+          
+
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <footer>
+    <p>&copy; 2025 Anna-Pel. Todos los derechos reservados.</p>
+  </footer>
+</div>

@@ -1,0 +1,79 @@
+.container {
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-left h2 {
+  margin: 0;
+  line-height: 1;
+}
+
+.search-field {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.mat-mdc-form-field {
+  font-size: 14px;
+}
+
+button[mat-raised-button] {
+  background-color: #333333;
+  color: white;
+  transition: background-color 0.2s ease;
+}
+
+button[mat-raised-button]:hover {
+  background-color: #1a1a1a;
+}
+
+.mat-table {
+  width: 100%;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.mat-header-cell {
+  font-weight: bold;
+  color: rgba(0,0,0,0.87);
+  background-color: #f5f5f5;
+}
+
+.mat-cell {
+  padding: 8px;
+}
+
+.mat-row:hover {
+  background-color: #f5f5f5;
+}
+
+.mat-icon-button {
+  margin: 0 4px;
+}
+
+.role-select {
+  width: 120px;
+}
+
+.status-toggle {
+  margin: 0 8px;
+}
+
+.unauthorized-message {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 18px;
+}

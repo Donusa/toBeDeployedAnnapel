@@ -1,0 +1,76 @@
+<h2 mat-dialog-title>Nuevo Cliente</h2>
+
+<div mat-dialog-content class="dialog-content-spacing">
+  <form [formGroup]="customerForm" (ngSubmit)="onSubmit()">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Nombre</mat-label>
+      <input matInput formControlName="name" required>
+      <mat-error *ngIf="customerForm.get('name')?.hasError('required')">
+        El nombre es requerido
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Dirección</mat-label>
+      <input matInput formControlName="address">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Teléfono</mat-label>
+      <input matInput formControlName="phone" required>
+      <mat-error *ngIf="customerForm.get('phone')?.hasError('required')">
+        El teléfono es requerido
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>DNI</mat-label>
+      <input matInput formControlName="dni">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Email</mat-label>
+      <input matInput formControlName="email" type="email">
+      <mat-error *ngIf="customerForm.get('email')?.hasError('email')">
+        Ingrese un email válido
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Deuda</mat-label>
+      <input matInput type="number" formControlName="currentAccount" required>
+      <mat-error *ngIf="customerForm.get('currentAccount')?.hasError('required')">
+        La deuda es requerida
+      </mat-error>
+      <mat-error *ngIf="customerForm.get('currentAccount')?.hasError('min')">
+        La deuda no puede ser negativa
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Descuento (%)</mat-label>
+      <input matInput type="number" formControlName="discount">
+      <mat-error *ngIf="customerForm.get('discount')?.hasError('min')">
+        El descuento no puede ser negativo
+      </mat-error>
+      <mat-error *ngIf="customerForm.get('discount')?.hasError('max')">
+        El descuento no puede ser mayor a 100%
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Ciudad</mat-label>
+      <input matInput formControlName="location" required>
+      <mat-error *ngIf="customerForm.get('location')?.hasError('required')">
+        La ciudad es requerida
+      </mat-error>
+    </mat-form-field>
+  </form>
+</div>
+
+<div mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-raised-button color="primary" (click)="onSubmit()" [disabled]="!customerForm.valid">
+    Guardar
+  </button>
+</div>
