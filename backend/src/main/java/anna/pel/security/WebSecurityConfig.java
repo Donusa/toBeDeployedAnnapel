@@ -86,7 +86,7 @@ public class WebSecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.addAllowedOrigin("http://localhost");
+        configuration.setAllowedOrigins(Arrays.asList(allowedOrigin.split(",")));
         configuration.addAllowedHeader("*");
         configuration.addAllowedMethod("*");
         
