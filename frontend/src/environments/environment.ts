@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8080',
+  apiUrl: 'vps-4929384-x.dattaweb.com:8080',
   endpoints: {
     auth: {
       base: '/api/auth',
