@@ -8,5 +8,5 @@ export interface Product {
   code: string;
   size: string;
   currentStock: number;
-  minimunStock: number;
+  minimumStock: number;
 }

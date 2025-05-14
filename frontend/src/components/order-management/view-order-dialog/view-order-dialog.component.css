@@ -1,7 +1,7 @@
 .dialog-content {
   padding: 20px;
   max-height: 80vh;
-  overflow-y: hidden;
+  overflow-y: auto;
 }
 
 .order-details {

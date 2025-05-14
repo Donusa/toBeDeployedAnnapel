@@ -158,6 +158,11 @@ export class AddOrderDialogComponent implements OnInit {
       return;
     }
 
+    const lastProductForm = this.productForms.length > 0 ? this.productForms.at(this.productForms.length - 1) as FormGroup : null;
+    if (lastProductForm && !lastProductForm.valid) {
+      return;
+    }
+
     const productForm = this.fb.group({
       productId: ['', [Validators.required, this.duplicateProductValidator()]],
       quantity: [0, [Validators.required, Validators.min(1), this.stockValidator()]]
@@ -214,7 +219,22 @@ export class AddOrderDialogComponent implements OnInit {
 
   removeProduct(index: number): void {
     if (this.productForms.length > 1) {
+      if (this.productSearchControls[index]) {
+        this.productSearchControls[index].setValue(null);
+        this.productSearchControls.splice(index, 1);
+        this.filteredProducts.splice(index, 1);
+      }
+      
       this.productForms.removeAt(index);
+      
+      this.productForms.controls.forEach((control) => {
+        const productIdControl = (control as FormGroup).get('productId');
+        if (productIdControl) {
+          productIdControl.updateValueAndValidity();
+        }
+      });
+      
+      this.orderForm.updateValueAndValidity();
     }
   }
 
