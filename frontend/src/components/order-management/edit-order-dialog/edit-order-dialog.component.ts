@@ -65,7 +65,7 @@ export class EditOrderDialogComponent implements OnInit {
       shippingMethod: [data.shippingMethod || '', Validators.required],
       paid: [data.paid || false],
       delivered: [data.delivered || false],
-      paymentMethod: [data.paymentMethod?.name || '', Validators.required],
+      paymentMethodId: [data.paymentMethod?.id || 1, Validators.required],
       shippingCost: [data.shippingCost || 0],
       amountDue: [data.amountDue || 0]
     });
@@ -114,7 +114,7 @@ export class EditOrderDialogComponent implements OnInit {
         shippingMethod: this.data.shippingMethod || null,
         shippingCost: this.data.shippingCost || 0,
         amountDue: this.data.amountDue || 0,
-        paymentMethod: this.data.paymentMethod?.name || null,
+        paymentMethodId: this.data.paymentMethod?.id || 1,
         paid: this.data.paid || false,
         delivered: this.data.delivered || false
       };
@@ -224,11 +224,8 @@ export class EditOrderDialogComponent implements OnInit {
   }
 
   hasAvailableProducts(): boolean {
-    console.log('Verificando productos disponibles...');
-    console.log('Total de productos en el sistema:', this.products?.length || 0);
     
     if (!this.products || this.products.length === 0) {
-      console.log('No hay productos disponibles en el sistema');
       return false;
     }
     
@@ -236,12 +233,7 @@ export class EditOrderDialogComponent implements OnInit {
       .map(group => (group as FormGroup).get('productId')?.value)
       .filter(id => id);
     
-    console.log('Productos ya seleccionados:', selectedProductIds);
-    
     const availableProducts = this.products.filter(product => !selectedProductIds.includes(product.id));
-    console.log('Productos disponibles para agregar:', availableProducts.length);
-    console.log('Lista de productos disponibles:', availableProducts.map(p => ({ id: p.id, name: p.name })));
-    
     return availableProducts.length > 0;
   }
 
@@ -274,15 +266,15 @@ export class EditOrderDialogComponent implements OnInit {
         ...this.orderForm.value,
         id: this.data.id,
         clientId: this.clientSearchControl.value?.id || this.data.client?.id,
-        products: this.productForms.value,
-        paymentMethodId: this.data.paymentMethod?.id
+        products: this.productForms.value
+        // Usamos el paymentMethodId del formulario, no sobrescribimos con el valor original
       };
       this.dialogRef.close(formData);
     } else {
       Object.keys(this.orderForm.controls).forEach(key => {
         const control = this.orderForm.get(key);
         if (control?.errors) {
-          console.log(`Error en ${key}:`, control.errors);
+          control.markAsTouched();
         }
       });
     }

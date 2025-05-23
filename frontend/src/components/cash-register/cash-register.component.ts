@@ -87,7 +87,6 @@ export class CashRegisterComponent implements OnInit {
   }
 
   checkUserRole(): void {
-    console.log('[CashRegisterComponent] Verificando rol de usuario');
     this.isAdmin = this.authService.isAdmin();
   }
 

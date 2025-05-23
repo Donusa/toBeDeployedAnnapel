@@ -86,10 +86,10 @@
     <div class="form-row">
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>Método de Pago</mat-label>
-        <mat-select formControlName="paymentMethod">
-          <mat-option value="CASH">Efectivo</mat-option>
-          <mat-option value="CARD">Tarjeta</mat-option>
-          <mat-option value="TRANSFER">Transferencia</mat-option>
+        <mat-select formControlName="paymentMethodId">
+          <mat-option [value]="1">Efectivo</mat-option>
+          <mat-option [value]="2">Tarjeta</mat-option>
+          <mat-option [value]="3">Transferencia</mat-option>
         </mat-select>
       </mat-form-field>
     </div>

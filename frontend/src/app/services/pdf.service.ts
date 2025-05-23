@@ -22,38 +22,41 @@ export class PdfService {
    * @param ticket Datos del ticket a convertir en PDF
    */
   generateTicketPdf(ticket: TicketResponse): void {
-    const doc = new jsPDF();
+    const doc = new jsPDF({
+      format: 'a5',
+      orientation: 'portrait'
+    });
     const pageWidth = doc.internal.pageSize.getWidth();
     
     const logoPath = 'assets/logos/logo.png';
-    const logoWidth = 40;
-    const logoHeight = 40;
-    const logoX = pageWidth - logoWidth - 10;
-    const logoY = 10;
+    const logoWidth = 25;
+    const logoHeight = 25;
+    const logoX = pageWidth - logoWidth - 5;
+    const logoY = 5;
     doc.addImage(logoPath, 'PNG', logoX, logoY, logoWidth, logoHeight);
 
-    doc.setFontSize(18);
-    doc.text('Ticket de Compra', pageWidth / 2, 20, { align: 'center' });
+    doc.setFontSize(16);
+    doc.text('Ticket de Compra', pageWidth / 2, 15, { align: 'center' });
 
-    doc.setFontSize(12);
-    doc.text(`Orden #: ${ticket.orderId}`, 20, 35);
-    doc.text(`Fecha: ${new Date(ticket.orderDate).toLocaleDateString()}`, 20, 42);
-    doc.text(`Estado de pago: ${ticket.paid ? 'Pagado' : 'Pendiente'}`, 20, 49);
-    doc.text(`Método de pago: ${this.paymentMethodMap[ticket.paymentMethodName] || ticket.paymentMethodName}`, 20, 56);
+    doc.setFontSize(10);
+    doc.text(`Orden #: ${ticket.orderId}`, 10, 25);
+    doc.text(`Fecha: ${new Date(ticket.orderDate).toLocaleDateString()}`, 10, 30);
+    doc.text(`Estado de pago: ${ticket.paid ? 'Pagado' : 'Pendiente'}`, 10, 35);
+    doc.text(`Método de pago: ${this.paymentMethodMap[ticket.paymentMethodName] || ticket.paymentMethodName}`, 10, 40);
     
-    doc.setFontSize(14);
-    doc.text('Datos del Cliente', 20, 70);
     doc.setFontSize(12);
-    doc.text(`Cliente: ${ticket.client.name}`, 20, 77);
-    doc.text(`Teléfono: ${ticket.client.phone}`, 20, 84);
+    doc.text('Datos del Cliente', 10, 50);
+    doc.setFontSize(10);
+    doc.text(`Cliente: ${ticket.client.name}`, 10, 55);
+    doc.text(`Teléfono: ${ticket.client.phone}`, 10, 60);
     if (ticket.client.address) {
-      doc.text(`Dirección: ${ticket.client.address}`, 20, 91);
+      doc.text(`Dirección: ${ticket.client.address}`, 10, 65);
     }
     
-    doc.setFontSize(14);
-    doc.text('Vendedor', 20, 105);
     doc.setFontSize(12);
-    doc.text(`Nombre: ${ticket.seller.username}`, 20, 112);
+    doc.text('Vendedor', 10, 75);
+    doc.setFontSize(10);
+    doc.text(`Nombre: ${ticket.seller.username}`, 10, 80);
 
     const tableColumn = ['Producto', 'Código', 'Cantidad', 'Precio', 'Subtotal'];
     const tableRows: any[] = [];
@@ -72,25 +75,27 @@ export class PdfService {
     (doc as any).autoTable({
       head: [tableColumn],
       body: tableRows,
-      startY: 125,
+      startY: 85,
       theme: 'grid',
       styles: {
-        fontSize: 10,
-        cellPadding: 3,
+        fontSize: 8,
+        cellPadding: 2,
         overflow: 'linebreak'
       },
       headStyles: {
         fillColor: [66, 66, 66]
-      }
+      },
+      margin: { left: 5, right: 5 }
     });
     
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.text(`Subtotal: $${ticket.subtotal.toFixed(2)}`, pageWidth - 60, finalY);
-    doc.text(`Costo de envío: $${ticket.shippingCost.toFixed(2)}`, pageWidth - 60, finalY + 7);
-    doc.setFontSize(14);
-    doc.text(`Total: $${ticket.total.toFixed(2)}`, pageWidth - 60, finalY + 15);
+    const finalY = (doc as any).lastAutoTable.finalY + 5;
+    doc.setFontSize(9);
+    doc.text(`Subtotal: $${ticket.subtotal.toFixed(2)}`, pageWidth - 45, finalY);
+    doc.text(`Costo de envío: $${ticket.shippingCost.toFixed(2)}`, pageWidth - 45, finalY + 5);
+    doc.setFontSize(11);
+    doc.text(`Total: $${ticket.total.toFixed(2)}`, pageWidth - 45, finalY + 12);
 
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     
     doc.save(`ticket_${ticket.client}_${ticket.orderDate}_${ticket.orderId}.pdf`);
   }

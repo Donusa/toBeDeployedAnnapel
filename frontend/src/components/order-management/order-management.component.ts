@@ -135,6 +135,18 @@ export class OrderManagementComponent implements OnInit {
   loadOrders(): void {
     this.orderService.getAllOrders().subscribe({
       next: (orders) => {
+        orders.forEach(order => {
+          if (order.paymentMethod === null) {
+            if (order.paymentMethod === 1) {
+              order.paymentMethod = { id: 1, name: 'Efectivo' };
+            } else if (order.paymentMethod === 2) {
+              order.paymentMethod = { id: 2, name: 'Tarjeta' };
+            } else if (order.paymentMethod === 3) {
+              order.paymentMethod = { id: 3, name: 'Transferencia' };
+            }
+          }
+        });
+        
         this.dataSource.data = orders;
       },
       error: (error) => {
@@ -284,15 +296,11 @@ export class OrderManagementComponent implements OnInit {
   }
 
   printTicket(orderId: number): void {
-    console.log('[OrderManagement] Iniciando generación de PDF para el pedido:', orderId);
     
     this.orderService.getTicket(orderId).subscribe({
       next: (response) => {
-        console.log('[OrderManagement] Respuesta del servicio recibida:', response);
-        
         try {
           this.pdfService.generateTicketPdf(response);
-          console.log('[OrderManagement] PDF generado y descargado exitosamente');
         } catch (error) {
           console.error('[OrderManagement] Error al generar el PDF:', error);
           this.snackBar.open('Error al generar el PDF del ticket', 'Cerrar', {

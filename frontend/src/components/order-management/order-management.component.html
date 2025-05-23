@@ -58,10 +58,16 @@
 
     <ng-container matColumnDef="paymentMethod">
       <th mat-header-cell *matHeaderCellDef mat-sort-header> Método de Pago </th>
-      <td mat-cell *matCellDef="let element"> {{
-        element.paymentMethod.name === 'CASH' ? 'Efectivo' : 
-        element.paymentMethod.name === 'CARD' ? 'Tarjeta' : 
-        element.paymentMethod.name === 'TRANSFER'? 'Transferencia' : element.paymentMethod.name}}
+      <td mat-cell *matCellDef="let element"> 
+        <ng-container *ngIf="element.paymentMethod !== null && element.paymentMethod !== undefined">
+          <span *ngIf="element.paymentMethod.id === 1">Efectivo</span>
+          <span *ngIf="element.paymentMethod.id === 2">Tarjeta</span>
+          <span *ngIf="element.paymentMethod.id === 3">Transferencia</span>
+          <span *ngIf="element.paymentMethod.id !== 1 && element.paymentMethod.id !== 2 && element.paymentMethod.id !== 3">{{element.paymentMethod.name || 'No especificado'}}</span>
+        </ng-container>
+        <ng-container *ngIf="element.paymentMethod === null || element.paymentMethod === undefined">
+          No especificado
+        </ng-container>
       </td>
     </ng-container>
     

@@ -240,7 +240,6 @@ export class AddOrderDialogComponent implements OnInit {
 
   onSubmit(): void {
     if (this.orderForm.valid) {
-      
       this.dialogRef.close({
         orderData: this.orderForm.value,
       });

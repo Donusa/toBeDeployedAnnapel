@@ -31,13 +31,9 @@ export class OrderService {
   }
 
   getTicket(orderId: number): Observable<TicketResponse> {
-    console.log('[OrderService] Solicitando ticket para el pedido:', orderId);
-    console.log('[OrderService] URL de la solicitud:', `${environment.apiUrl}/api/reports/ticket/${orderId}`);
-    
     return new Observable<TicketResponse>(observer => {
       this.http.get<TicketResponse>(`${environment.apiUrl}/api/reports/ticket/${orderId}`).subscribe({
         next: (response) => {
-          console.log('[OrderService] Respuesta del servidor recibida:', response);
           observer.next(response);
           observer.complete();
         },

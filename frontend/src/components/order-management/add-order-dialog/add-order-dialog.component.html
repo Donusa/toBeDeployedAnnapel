@@ -75,11 +75,11 @@
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>Método de pago</mat-label>
       <mat-select formControlName="paymentMethodId">
-        <mat-option [value]="0">Efectivo</mat-option>
-        <mat-option [value]="1">Tarjeta</mat-option>
-        <mat-option [value]="2">Transferencia</mat-option>
+        <mat-option [value]="1">Efectivo</mat-option>
+        <mat-option [value]="2">Tarjeta</mat-option>
+        <mat-option [value]="3">Transferencia</mat-option>
       </mat-select>
-        <mat-error *ngIf="orderForm.get('paymentMethod')?.hasError('required')">
+        <mat-error *ngIf="orderForm.get('paymentMethodId')?.hasError('required')">
           El método de pago es requerido
         </mat-error>
     </mat-form-field>
