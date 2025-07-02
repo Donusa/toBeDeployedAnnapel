@@ -327,10 +327,18 @@ public class OrderController {
                 order.getSeller().getCommissionPercentage()
         );
 
+        // Get client discount percentage
+        Double clientDiscount = order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0;
+
         // Convert order items to OrderItemResponse list
         List<OrderItemResponse> orderItemResponses = order.getOrderItems().stream()
                 .map(item -> {
                     Product product = item.getProduct();
+                    // Calculate subtotal with client discount applied
+                    Double subtotalWithDiscount = item.getSubtotal();
+                    if (clientDiscount > 0) {
+                        subtotalWithDiscount = item.getSubtotal() * (1 - clientDiscount / 100.0);
+                    }
                     return new OrderItemResponse(
                             item.getId(),
                             product.getId(),
@@ -338,7 +346,7 @@ public class OrderController {
                             product.getCode(),
                             item.getQuantity(),
                             item.getPrice(),
-                            item.getSubtotal(),
+                            subtotalWithDiscount,
                             new ProductResponse(
                                 product.getId(),
                                 product.getName(),
@@ -355,6 +363,14 @@ public class OrderController {
                 })
                 .collect(Collectors.toList());
 
+        // Calculate subtotal (sum of all order items subtotals with discount already applied)
+        Double subtotalWithDiscount = orderItemResponses.stream()
+                .mapToDouble(OrderItemResponse::getSubtotal)
+                .sum();
+
+        // Calculate total (subtotal with discount + shipping cost)
+        Double total = subtotalWithDiscount + order.getShippingCost();
+
         return new OrderResponse(
                 order.getId(),
                 clientResponse,
@@ -364,7 +380,7 @@ public class OrderController {
                 order.getDeliveryDate(),
                 order.getDelivered(),
                 order.getPaid(),
-                order.getAmountDue(),
+                total, // Use the calculated total with discount
                 order.getShippingMethod(),
                 order.getPaymentMethod(),
                 order.getShippingCost()

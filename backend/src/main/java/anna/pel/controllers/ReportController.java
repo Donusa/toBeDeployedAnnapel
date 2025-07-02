@@ -52,13 +52,22 @@ public class ReportController {
     public ResponseEntity<?> generateTicket(@PathVariable Long orderId) {
         return orderRepository.findById(orderId)
                 .map(order -> {
+                    // Get client discount percentage
+ Double clientDiscount = order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0;                   
+                    
                     // Calculate subtotal (sum of all order items subtotals)
                     Double subtotal = order.getOrderItems().stream()
                             .mapToDouble(OrderItem::getSubtotal)
                             .sum();
+                    
+                    // Apply client discount to subtotal
+                    Double subtotalWithDiscount = subtotal;
+                    if (clientDiscount > 0) {
+                        subtotalWithDiscount = subtotal * (1 - clientDiscount / 100.0);
+                    }
 
-                    // Calculate total (subtotal + shipping cost)
-                    Double total = subtotal + order.getShippingCost();
+                    // Calculate total (subtotal with discount + shipping cost)
+                    Double total = subtotalWithDiscount + order.getShippingCost();
 
                     // Create client response
                     ClientResponse clientResponse = new ClientResponse(
@@ -111,7 +120,7 @@ public class ReportController {
                             clientResponse,
                             sellerResponse,
                             productResponses,
-                            subtotal,
+                            subtotalWithDiscount,
                             order.getShippingCost(),
                             total,
                             paymentMethodName,
@@ -139,10 +148,20 @@ public class ReportController {
         Map<Product, Double> productAmountMap = new HashMap<>();
 
         for (Order order : dailyOrders) {
+            // Get client discount percentage
+            Double clientDiscount = order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0;
+            
             for (OrderItem item : order.getOrderItems()) {
                 Product product = item.getProduct();
                 productQuantityMap.put(product, productQuantityMap.getOrDefault(product, 0) + item.getQuantity());
-                productAmountMap.put(product, productAmountMap.getOrDefault(product, 0.0) + item.getSubtotal());
+                
+                // Apply client discount to subtotal
+                Double subtotalWithDiscount = item.getSubtotal();
+                if (clientDiscount > 0) {
+                    subtotalWithDiscount = item.getSubtotal() * (1 - clientDiscount / 100.0);
+                }
+                
+                productAmountMap.put(product, productAmountMap.getOrDefault(product, 0.0) + subtotalWithDiscount);
             }
         }
 
@@ -239,8 +258,21 @@ public class ReportController {
                     List<Order> sellerOrders = entry.getValue();
 
                     double totalSales = sellerOrders.stream()
-                            .flatMap(order -> order.getOrderItems().stream())
-                            .mapToDouble(OrderItem::getSubtotal)
+                            .mapToDouble(order -> {
+                                // Get client discount percentage
+                                Double clientDiscount = order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0;
+                                
+                                // Calculate subtotal
+                                Double subtotal = order.getOrderItems().stream()
+                                        .mapToDouble(OrderItem::getSubtotal)
+                                        .sum();
+                                
+                                // Apply client discount
+                                if (clientDiscount > 0) {
+                                    return subtotal * (1 - clientDiscount / 100.0);
+                                }
+                                return subtotal;
+                            })
                             .sum();
 
                     double commission = totalSales * (seller.getCommissionPercentage() / 100.0);
@@ -275,7 +307,8 @@ public class ReportController {
                                         item.getProduct().getCode(),
                                         item.getQuantity(),
                                         item.getPrice(),
-                                        item.getSubtotal(),
+                                        // Apply client discount to subtotal
+                                        item.getSubtotal() * (1 - (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0) / 100.0),
                                         new ProductResponse(
                                             item.getProduct().getId(),
                                             item.getProduct().getName(),
