@@ -61,13 +61,21 @@ export class PdfService {
     const tableColumn = ['Producto', 'Código', 'Cantidad', 'Precio', 'Subtotal'];
     const tableRows: any[] = [];
     
+    const clientDiscount = ticket.client.discount || 0;
+    
     ticket.products.forEach(product => {
+      const productSubtotal = product.price * product.amount;
+      
+      const discountedSubtotal = clientDiscount > 0 ? 
+        productSubtotal * (1 - clientDiscount / 100) : 
+        productSubtotal;
+      
       const productData = [
         product.name,
         product.code,
         product.amount,
         `$${product.price.toFixed(2)}`,
-        `$${ticket.subtotal.toFixed(2)}`
+        `$${discountedSubtotal.toFixed(2)}`
       ];
       tableRows.push(productData);
     });
@@ -90,10 +98,11 @@ export class PdfService {
     
     const finalY = (doc as any).lastAutoTable.finalY + 5;
     doc.setFontSize(9);
-    doc.text(`Subtotal: $${ticket.subtotal.toFixed(2)}`, pageWidth - 45, finalY);
+    doc.text(`Subtotal: $${ticket.subtotal.toFixed(2)}`,pageWidth - 45, finalY);
+    doc.setFontSize(9);
     doc.text(`Costo de envío: $${ticket.shippingCost.toFixed(2)}`, pageWidth - 45, finalY + 5);
     doc.setFontSize(11);
-    doc.text(`Total: $${ticket.total.toFixed(2)}`, pageWidth - 45, finalY + 12);
+    doc.text(`Total: $${ticket.total.toFixed(2)}`, pageWidth - 45, finalY + 11);
 
     doc.setFontSize(8);
     

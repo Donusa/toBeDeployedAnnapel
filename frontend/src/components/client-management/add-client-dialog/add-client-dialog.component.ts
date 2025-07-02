@@ -48,11 +48,34 @@ export class AddCustomerDialogComponent implements OnInit {
 
   onSubmit(): void {
     if (this.customerForm.valid) {
-      this.dialogRef.close(this.customerForm.value);
+      const formValues = this.customerForm.value;
+      const clientData = Object.keys(formValues).reduce((result, key) => {
+        result[key] = formValues[key] === '' ? null : formValues[key];
+        return result;
+      }, {} as any);
+      
+      this.dialogRef.close(clientData);
     }
   }
 
   onCancel(): void {
     this.dialogRef.close();
+  }
+
+  getErrorMessage(controlName: string): string {
+    const control = this.customerForm.get(controlName);
+    if (control?.hasError('required')) {
+      return 'Este campo es obligatorio';
+    }
+    if (control?.hasError('email')) {
+      return 'Email inválido';
+    }
+    if (control?.hasError('min')) {
+      return 'El valor no puede ser menor a 0';
+    }
+    if (control?.hasError('max')) {
+      return 'El descuento no puede ser mayor a 100%';
+    }
+    return '';
   }
 }

@@ -34,19 +34,25 @@ export class EditClientDialogComponent {
     this.clientForm = this.fb.group({
       name: [data.name, [Validators.required, Validators.minLength(3)]],
       address: [data.address],
-      phone: [data.phone, [Validators.required, Validators.pattern('^[0-9]{10}$')]],
+      phone: [data.phone, [Validators.required]],
       dni: [data.dni],
       email: [data.email, [Validators.email]],
       currentAccount: [data.currentAccount],
-      discount: [data.discount],
+      discount: [data.discount, [Validators.min(0), Validators.max(100)]],
       location: [data.location, [Validators.required]]
     });
   }
 
   onSubmit(): void {
     if (this.clientForm.valid) {
+      const formValues = this.clientForm.value;
+      const processedValues = Object.keys(formValues).reduce((result, key) => {
+        result[key] = formValues[key] === '' ? null : formValues[key];
+        return result;
+      }, {} as any);
+      
       const formData = {
-        ...this.clientForm.value,
+        ...processedValues,
         id: this.data.id
       };
       this.dialogRef.close(formData);
@@ -68,8 +74,11 @@ export class EditClientDialogComponent {
     if (control?.hasError('minlength')) {
       return 'El nombre debe tener al menos 3 caracteres';
     }
-    if (control?.hasError('pattern')) {
-      return 'Número de teléfono inválido (10 dígitos requeridos)';
+    if (control?.hasError('min')) {
+      return 'El valor no puede ser menor a 0';
+    }
+    if (control?.hasError('max')) {
+      return 'El descuento no puede ser mayor a 100%';
     }
     return '';
   }
