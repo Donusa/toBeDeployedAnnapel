@@ -73,6 +73,10 @@ export class CashRegisterComponent implements OnInit {
           details: userSales
         }));
 
+        this.totalCommissions = response.reduce((total, userSales) => {
+          return total + (userSales.totalCommission || 0);
+        }, 0);
+
         if (!this.isAdmin) {
           const currentUser = this.authService.getCurrentUser();
           const userSalesData = response.find(sale => sale.user.id === currentUser?.id);

@@ -267,7 +267,6 @@ export class EditOrderDialogComponent implements OnInit {
         id: this.data.id,
         clientId: this.clientSearchControl.value?.id || this.data.client?.id,
         products: this.productForms.value
-        // Usamos el paymentMethodId del formulario, no sobrescribimos con el valor original
       };
       this.dialogRef.close(formData);
     } else {

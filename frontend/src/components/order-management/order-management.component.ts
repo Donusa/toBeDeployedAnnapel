@@ -147,6 +147,13 @@ export class OrderManagementComponent implements OnInit {
           }
         });
         
+        orders.sort((a, b) => {
+          if (a.delivered !== b.delivered) {
+            return a.delivered ? 1 : -1;
+          }
+          return new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime();
+        });
+        
         this.dataSource.data = orders;
       },
       error: (error) => {

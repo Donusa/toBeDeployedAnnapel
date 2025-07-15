@@ -56,8 +56,8 @@ export class CustomerManagementComponent implements OnInit {
   applyFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
     this.dataSource.filterPredicate = (data: any, filter: string) => {
-      return data.nombre.toLowerCase().includes(filter.toLowerCase()) ||
-             data.telefono.toLowerCase().includes(filter.toLowerCase()) ||
+      return (data.name && data.name.toLowerCase().includes(filter.toLowerCase())) ||
+             (data.phone && data.phone.toLowerCase().includes(filter.toLowerCase())) ||
              (data.dni && data.dni.toLowerCase().includes(filter.toLowerCase()));
     };
     this.dataSource.filter = filterValue.trim().toLowerCase();
