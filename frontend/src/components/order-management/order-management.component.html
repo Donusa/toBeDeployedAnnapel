@@ -57,7 +57,7 @@
     
     <ng-container matColumnDef="amountDue">
       <th mat-header-cell *matHeaderCellDef mat-sort-header (click)="applyColumnFilter('amountDue')"> Deuda <mat-icon *ngIf="currentFilterColumn !== 'amountDue'" class="filter-icon">filter_list</mat-icon><mat-icon *ngIf="currentFilterColumn === 'amountDue'" class="filter-icon active">filter_list</mat-icon></th>
-      <td mat-cell *matCellDef="let element"> ${{element.client.currentAccount}} </td>
+      <td mat-cell *matCellDef="let element"> ${{element.amountDue}} </td>
     </ng-container>
 
     <ng-container matColumnDef="paymentMethod">

@@ -23,9 +23,9 @@
         <mat-cell *matCellDef="let element"> {{element.orderDate | date:'dd/MM/yyyy'}} </mat-cell>
       </ng-container>
 
-      <ng-container matColumnDef="amountDue">
+      <ng-container matColumnDef="total">
         <mat-header-cell *matHeaderCellDef> Monto </mat-header-cell>
-        <mat-cell *matCellDef="let element"> {{element.amountDue | currency}} </mat-cell>
+        <mat-cell *matCellDef="let element"> {{element.total | currency}} </mat-cell>
       </ng-container>
 
       <ng-container matColumnDef="paymentMethod">

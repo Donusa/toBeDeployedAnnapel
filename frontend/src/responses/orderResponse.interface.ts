@@ -12,6 +12,7 @@ deliveryDate: string;
 delivered: boolean;
 paid: boolean;
 amountDue: number;
+total: number;
 shippingMethod: string;
 paymentMethod: PaymentMethod;
 shippingCost: number;

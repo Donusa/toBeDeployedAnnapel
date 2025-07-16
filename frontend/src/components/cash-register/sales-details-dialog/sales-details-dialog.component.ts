@@ -19,7 +19,7 @@ import { MatTableDataSource } from '@angular/material/table';
   ]
 })
 export class SalesDetailsDialogComponent {
-  displayedColumns: string[] = ['id', 'clientName', 'orderDate', 'amountDue', 'paymentMethod'];
+  displayedColumns: string[] = ['id', 'clientName', 'orderDate', 'total', 'paymentMethod'];
   dataSource = new MatTableDataSource<any>();
   sellerName: string = '';
   totalSales: number = 0;
@@ -35,7 +35,7 @@ export class SalesDetailsDialogComponent {
 
   calculateTotalSales(): void {
     this.totalSales = this.dataSource.data
-      .reduce((total, order) => total + (order.amountDue || 0), 0);
+      .reduce((total, order) => total + (order.total || 0), 0);
   }
 
   onClose(): void {

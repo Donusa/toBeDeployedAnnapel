@@ -147,7 +147,13 @@ public class OrderController {
         order.setDeliveryDate(orderRequest.getDeliveryDate());
         order.setDelivered(orderRequest.getDelivered());
         order.setPaid(orderRequest.getPaid());
-        order.setAmountDue(orderRequest.getAmountDue());
+        
+        // Si el pedido se marca como pagado, establecer la deuda en 0
+        if (orderRequest.getPaid() != null && orderRequest.getPaid()) {
+            order.setAmountDue(0.0);
+        } else {
+            order.setAmountDue(orderRequest.getAmountDue());
+        }
         order.setShippingMethod(orderRequest.getShippingMethod());
         order.setShippingCost(orderRequest.getShippingCost());
         
@@ -160,13 +166,14 @@ public class OrderController {
         Order savedOrder = orderRepository.save(order);
         
         // Actualizar la deuda del cliente (currentAccount) si la orden tiene deuda pendiente
-        if (orderRequest.getAmountDue() != null && orderRequest.getAmountDue() > 0) {
+        // Usar el amountDue del pedido guardado (que ya es 0 si está pagado)
+        if (savedOrder.getAmountDue() != null && savedOrder.getAmountDue() > 0) {
             // Inicializar currentAccount si es null
             if (client.getCurrentAccount() == null) {
                 client.setCurrentAccount(0.0);
             }
             // Sumar la deuda de la orden a la cuenta corriente del cliente
-            client.setCurrentAccount(client.getCurrentAccount() + orderRequest.getAmountDue());
+            client.setCurrentAccount(client.getCurrentAccount() + savedOrder.getAmountDue());
             clientRepository.save(client);
         }
         
@@ -194,8 +201,9 @@ public class OrderController {
                                 .body(new MessageResponse("Error: Seller not found!"));
                     }
 
-                    // Guardar la deuda anterior para calcular la diferencia después
+                    // Guardar la deuda anterior y el estado de pago anterior para calcular la diferencia después
                     Double previousAmountDue = order.getAmountDue();
+                    Boolean previousPaidStatus = order.getPaid();
                     
                     // Update client and seller
                     order.setClient(client);
@@ -241,7 +249,13 @@ public class OrderController {
                     order.setDeliveryDate(orderRequest.getDeliveryDate());
                     order.setDelivered(orderRequest.getDelivered());
                     order.setPaid(orderRequest.getPaid());
-                    order.setAmountDue(orderRequest.getAmountDue());
+                    
+                    // Si el pedido se marca como pagado, establecer la deuda en 0
+                    if (orderRequest.getPaid() != null && orderRequest.getPaid()) {
+                        order.setAmountDue(0.0);
+                    } else {
+                        order.setAmountDue(orderRequest.getAmountDue());
+                    }
                     order.setShippingMethod(orderRequest.getShippingMethod());
                     order.setShippingCost(orderRequest.getShippingCost());
                     
@@ -254,18 +268,24 @@ public class OrderController {
                     Order updatedOrder = orderRepository.save(order);
                     
                     // Actualizar la deuda del cliente (currentAccount) basado en la diferencia entre la deuda anterior y la nueva
-                    if (previousAmountDue != null || orderRequest.getAmountDue() != null) {
+                    if (previousAmountDue != null || updatedOrder.getAmountDue() != null) {
                         // Inicializar valores nulos
                         if (previousAmountDue == null) previousAmountDue = 0.0;
-                        Double newAmountDue = orderRequest.getAmountDue() != null ? orderRequest.getAmountDue() : 0.0;
+                        Double newAmountDue = updatedOrder.getAmountDue() != null ? updatedOrder.getAmountDue() : 0.0;
+                        
+                        // Si el pedido anterior estaba marcado como pagado, la deuda anterior efectiva era 0
+                        Double effectivePreviousAmountDue = (previousPaidStatus != null && previousPaidStatus) ? 0.0 : previousAmountDue;
+                        
+                        // La nueva deuda efectiva es directamente el amountDue del pedido actualizado (ya es 0 si está pagado)
+                        Double effectiveNewAmountDue = newAmountDue;
                         
                         // Inicializar currentAccount si es null
                         if (client.getCurrentAccount() == null) {
                             client.setCurrentAccount(0.0);
                         }
                         
-                        // Calcular la diferencia y actualizar la cuenta del cliente
-                        Double difference = newAmountDue - previousAmountDue;
+                        // Calcular la diferencia usando las deudas efectivas y actualizar la cuenta del cliente
+                        Double difference = effectiveNewAmountDue - effectivePreviousAmountDue;
                         client.setCurrentAccount(client.getCurrentAccount() + difference);
                         clientRepository.save(client);
                     }
@@ -287,8 +307,10 @@ public class OrderController {
                     }
                     
                     // Actualizar la deuda del cliente (currentAccount) si la orden tenía deuda pendiente
+                    // Solo restar deuda si el pedido NO estaba marcado como pagado
                     Client client = order.getClient();
-                    if (order.getAmountDue() != null && order.getAmountDue() > 0 && client != null) {
+                    if (order.getAmountDue() != null && order.getAmountDue() > 0 && client != null &&
+                        (order.getPaid() == null || !order.getPaid())) {
                         // Inicializar currentAccount si es null
                         if (client.getCurrentAccount() == null) {
                             client.setCurrentAccount(0.0);
@@ -380,6 +402,7 @@ public class OrderController {
                 order.getDeliveryDate(),
                 order.getDelivered(),
                 order.getPaid(),
+                order.getAmountDue(), // Use the actual debt amount for this specific order
                 total, // Use the calculated total with discount
                 order.getShippingMethod(),
                 order.getPaymentMethod(),

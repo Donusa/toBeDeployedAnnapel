@@ -102,8 +102,8 @@
     </div>
 
     <div class="form-row checkbox-row">
-      <mat-checkbox formControlName="delivered">Entregado</mat-checkbox>
-      <mat-checkbox formControlName="paid">Pagado</mat-checkbox>
+      <mat-checkbox formControlName="delivered" [disabled]="isDeliveredDisabled">Entregado</mat-checkbox>
+      <mat-checkbox formControlName="paid" [disabled]="isPaidDisabled">Pagado</mat-checkbox>
     </div>
   </form>
 </mat-dialog-content>

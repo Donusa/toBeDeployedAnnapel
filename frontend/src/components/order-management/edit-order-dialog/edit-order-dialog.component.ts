@@ -47,6 +47,9 @@ export class EditOrderDialogComponent implements OnInit {
   productSearchControls: FormControl[] = [];
   filteredClients: Observable<any[]>;
   filteredProducts: Observable<any[]>[] = [];
+  
+  isPaidDisabled: boolean = false;
+  isDeliveredDisabled: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -77,6 +80,9 @@ export class EditOrderDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.isPaidDisabled = this.data.paid === true;
+    this.isDeliveredDisabled = this.data.delivered === true;
+    
     this.clientService.getClients().subscribe(clients => {
       this.clients = clients;
       const selectedClient = this.clients.find(c => c.id === (this.data?.client?.id || this.data?.clientId));
@@ -120,6 +126,27 @@ export class EditOrderDialogComponent implements OnInit {
       };
       
       this.orderForm.patchValue(values);
+      
+      if (this.isPaidDisabled) {
+        this.orderForm.get('paid')?.disable();
+      }
+      if (this.isDeliveredDisabled) {
+        this.orderForm.get('delivered')?.disable();
+      }
+      
+      this.orderForm.get('paid')?.valueChanges.subscribe(value => {
+        if (value === true) {
+          this.isPaidDisabled = true;
+          this.orderForm.get('paid')?.disable();
+        }
+      });
+      
+      this.orderForm.get('delivered')?.valueChanges.subscribe(value => {
+        if (value === true) {
+          this.isDeliveredDisabled = true;
+          this.orderForm.get('delivered')?.disable();
+        }
+      });
     });
   }
 
@@ -262,8 +289,10 @@ export class EditOrderDialogComponent implements OnInit {
 
   onSubmit(): void {
     if (this.orderForm.valid) {
+      // Incluir valores de campos deshabilitados usando getRawValue()
+      const rawFormValue = this.orderForm.getRawValue();
       const formData = {
-        ...this.orderForm.value,
+        ...rawFormValue,
         id: this.data.id,
         clientId: this.clientSearchControl.value?.id || this.data.client?.id,
         products: this.productForms.value

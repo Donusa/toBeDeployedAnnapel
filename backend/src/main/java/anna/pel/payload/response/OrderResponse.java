@@ -21,6 +21,7 @@ public class OrderResponse {
     private Boolean delivered;
     private Boolean paid;
     private Double amountDue;
+    private Double total;
     private String shippingMethod;
     private PaymentMethod paymentMethod;
     private Double shippingCost;

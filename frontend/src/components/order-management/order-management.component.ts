@@ -110,7 +110,7 @@ export class OrderManagementComponent implements OnInit {
         break;
       case 'amountDue':
         this.dataSource.filterPredicate = (data: any, filter: string) => {
-          return data.client.currentAccount > 0;
+          return data.amountDue > 0;
         };
         filterValue = 'true';
         break;
@@ -135,6 +135,7 @@ export class OrderManagementComponent implements OnInit {
   loadOrders(): void {
     this.orderService.getAllOrders().subscribe({
       next: (orders) => {
+        console.log('[OrderManagement] Información de pedidos recibida:', orders);
         orders.forEach(order => {
           if (order.paymentMethod === null) {
             if (order.paymentMethod === 1) {
