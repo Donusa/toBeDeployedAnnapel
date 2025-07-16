@@ -247,7 +247,24 @@ export class EditOrderDialogComponent implements OnInit {
   }
 
   removeProduct(index: number): void {
-    this.productForms.removeAt(index);
+    if (this.productForms.length > 1) {
+      if (this.productSearchControls[index]) {
+        this.productSearchControls[index].setValue(null);
+        this.productSearchControls.splice(index, 1);
+        this.filteredProducts.splice(index, 1);
+      }
+      
+      this.productForms.removeAt(index);
+      
+      this.productForms.controls.forEach((control) => {
+        const productIdControl = (control as FormGroup).get('productId');
+        if (productIdControl) {
+          productIdControl.updateValueAndValidity();
+        }
+      });
+      
+      this.orderForm.updateValueAndValidity();
+    }
   }
 
   hasAvailableProducts(): boolean {
