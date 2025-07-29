@@ -33,7 +33,7 @@ export class EditProductDialogComponent implements OnInit {
   ) {
     this.productForm = this.fb.group({
       name: [data.name, Validators.required],
-      formaldehydePercentage: [data.formaldehydePercentage, [Validators.required, Validators.min(0)]],
+      formaldehydePercentage: [data.formaldehydePercentage, [Validators.required, Validators.min(0), Validators.max(100)]],
       price: [data.price, [Validators.required, Validators.min(0)]],
       cost: [data.cost, [Validators.required, Validators.min(0)]],
       type: [data.type, Validators.required],

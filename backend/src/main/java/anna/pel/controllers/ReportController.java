@@ -32,6 +32,10 @@ import anna.pel.payload.response.ProductTicketResponse;
 import anna.pel.payload.response.TicketResponse;
 import anna.pel.payload.response.UserCommissionResponse;
 import anna.pel.payload.response.UserResponse;
+import anna.pel.payload.response.ProductRankingResponse;
+import anna.pel.payload.response.MessageResponse;
+import java.util.Set;
+import java.util.HashSet;
 import anna.pel.repository.OrderRepository;
 import anna.pel.repository.UserRepository;
 
@@ -45,31 +49,23 @@ public class ReportController {
     @Autowired
     private UserRepository userRepository;
 
-    /**
-     * Generate a ticket for printing based on an order
-     */
     @GetMapping("/ticket/{orderId}")
     public ResponseEntity<?> generateTicket(@PathVariable Long orderId) {
         return orderRepository.findById(orderId)
                 .map(order -> {
-                    // Get client discount percentage
- Double clientDiscount = order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0;                   
+                    Double discountToApply = order.getCustomDiscount() != null ? order.getCustomDiscount() : 
+                            (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0);                   
                     
-                    // Calculate subtotal (sum of all order items subtotals)
                     Double subtotal = order.getOrderItems().stream()
                             .mapToDouble(OrderItem::getSubtotal)
                             .sum();
                     
-                    // Apply client discount to subtotal
                     Double subtotalWithDiscount = subtotal;
-                    if (clientDiscount > 0) {
-                        subtotalWithDiscount = subtotal * (1 - clientDiscount / 100.0);
+                    if (discountToApply > 0) {
+                        subtotalWithDiscount = subtotal * (1 - discountToApply / 100.0);
                     }
 
-                    // Calculate total (subtotal with discount + shipping cost)
                     Double total = subtotalWithDiscount + order.getShippingCost();
-
-                    // Create client response
                     ClientResponse clientResponse = new ClientResponse(
                             order.getClient().getId(),
                             order.getClient().getName(),
@@ -81,8 +77,6 @@ public class ReportController {
                             order.getClient().getDiscount(),
                             order.getClient().getLocation()
                     );
-
-                    // Create product response list from order items
                     List<ProductTicketResponse> productResponses = order.getOrderItems().stream()
                             .map(item -> {
                                 Product product = item.getProduct();
@@ -100,11 +94,8 @@ public class ReportController {
                             })
                             .collect(Collectors.toList());
 
-                    // Get payment method name
                     String paymentMethodName = order.getPaymentMethod() != null ?
                             order.getPaymentMethod().getName() : "Not specified";
-
-                    // Create seller response
                     UserResponse sellerResponse = new UserResponse(
                             order.getSeller().getId(),
                             order.getSeller().getUsername(),
@@ -112,8 +103,6 @@ public class ReportController {
                             order.getSeller().getRole().name(),
                             order.getSeller().getCommissionPercentage()
                     );
-                    
-                    // Create and return ticket response
                     TicketResponse ticketResponse = new TicketResponse(
                             order.getId(),
                             order.getOrderDate(),
@@ -132,33 +121,25 @@ public class ReportController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /**
-     * Generate daily cash register report for a specific date
-     */
     @GetMapping("/daily-cash-register")
     public ResponseEntity<?> getDailyCashRegister(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
-        // Get all orders for the specified date
         List<Order> dailyOrders = orderRepository.findByOrderDate(date);
-
-        
-        // Calculate products sold with quantities
         Map<Product, Integer> productQuantityMap = new HashMap<>();
         Map<Product, Double> productAmountMap = new HashMap<>();
 
         for (Order order : dailyOrders) {
-            // Get client discount percentage
-            Double clientDiscount = order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0;
+            Double discountToApply = order.getCustomDiscount() != null ? order.getCustomDiscount() : 
+                    (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0);
             
             for (OrderItem item : order.getOrderItems()) {
                 Product product = item.getProduct();
                 productQuantityMap.put(product, productQuantityMap.getOrDefault(product, 0) + item.getQuantity());
                 
-                // Apply client discount to subtotal
                 Double subtotalWithDiscount = item.getSubtotal();
-                if (clientDiscount > 0) {
-                    subtotalWithDiscount = item.getSubtotal() * (1 - clientDiscount / 100.0);
+                if (discountToApply > 0) {
+                    subtotalWithDiscount = item.getSubtotal() * (1 - discountToApply / 100.0);
                 }
                 
                 productAmountMap.put(product, productAmountMap.getOrDefault(product, 0.0) + subtotalWithDiscount);
@@ -170,13 +151,11 @@ public class ReportController {
             Product product = entry.getKey();
             Integer quantity = entry.getValue();
             Double totalAmount = productAmountMap.get(product);
-
-            // Usar el precio actual del producto para el informe, pero el monto total es el calculado de los items
             ProductResponse productResponse = new ProductResponse(
                     product.getId(),
                     product.getName(),
                     product.getFormaldehydePercentage(),
-                    product.getPrice(), // Precio actual del producto
+                    product.getPrice(),
                     product.getCost(),
                     product.getType(),
                     product.getCode(),
@@ -190,18 +169,15 @@ public class ReportController {
             ));
         }
 
-        // Calculate income by payment method
         double cashIncome = calculateIncomeByPaymentMethod(dailyOrders, PaymentMethod.CASH);
         double cardIncome = calculateIncomeByPaymentMethod(dailyOrders, PaymentMethod.CARD);
         double transferIncome = calculateIncomeByPaymentMethod(dailyOrders, PaymentMethod.TRANSFER);
         double totalIncome = cashIncome + cardIncome + transferIncome;
 
-        // Calculate shipping payments
         double shippingPayments = dailyOrders.stream()
                 .mapToDouble(Order::getShippingCost)
                 .sum();
 
-        // Get commission percentage from the first admin user (or use default)
         User adminUser = userRepository.findAll().stream()
                 .filter(user -> user.getRole() == User.Role.ADMIN)
                 .findFirst()
@@ -209,8 +185,6 @@ public class ReportController {
 
         double commissionPercentage = adminUser != null ? adminUser.getCommissionPercentage() : 0.0;
         double commissionAmount = totalIncome * (commissionPercentage / 100.0);
-
-        // Create and return daily cash register response
         DailyCashRegisterResponse response = new DailyCashRegisterResponse();
         response.setDate(date);
         response.setProductsSold(productsSold);
@@ -225,24 +199,23 @@ public class ReportController {
         return ResponseEntity.ok(response);
     }
 
-  
-    
-    
-    /**
-     * Helper method to calculate income by payment method
-     */
     private double calculateIncomeByPaymentMethod(List<Order> orders, String paymentMethodName) {
-        return orders.stream()
+        double total = orders.stream()
                 .filter(order -> order.getPaymentMethod() != null && 
                         paymentMethodName.equals(order.getPaymentMethod().getName()))
-                .flatMap(order -> order.getOrderItems().stream())
-                .mapToDouble(OrderItem::getSubtotal)
+                .flatMap(order -> order.getOrderItems().stream()
+                        .map(item -> {
+                            Double discountToApply = order.getCustomDiscount() != null ? order.getCustomDiscount() : 
+                                    (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0);
+                            return item.getSubtotal() * (1 - discountToApply / 100.0);
+                        }))
+                .mapToDouble(Double::doubleValue)
                 .sum();
+        
+        System.out.println("Total calculado para " + paymentMethodName + ": " + total);
+        return total;
     }
 
-    /**
-     * Get sales report by user for a specific date
-     */
     @GetMapping("/user-sales")
     public ResponseEntity<?> getUserSalesReport(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
@@ -259,17 +232,15 @@ public class ReportController {
 
                     double totalSales = sellerOrders.stream()
                             .mapToDouble(order -> {
-                                // Get client discount percentage
-                                Double clientDiscount = order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0;
+                                Double discountToApply = order.getCustomDiscount() != null ? order.getCustomDiscount() : 
+                                        (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0);
                                 
-                                // Calculate subtotal
                                 Double subtotal = order.getOrderItems().stream()
                                         .mapToDouble(OrderItem::getSubtotal)
                                         .sum();
                                 
-                                // Apply client discount
-                                if (clientDiscount > 0) {
-                                    return subtotal * (1 - clientDiscount / 100.0);
+                                if (discountToApply > 0) {
+                                    return subtotal * (1 - discountToApply / 100.0);
                                 }
                                 return subtotal;
                             })
@@ -307,8 +278,8 @@ public class ReportController {
                                         item.getProduct().getCode(),
                                         item.getQuantity(),
                                         item.getPrice(),
-                                        // Apply client discount to subtotal
-                                        item.getSubtotal() * (1 - (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0) / 100.0),
+                                        item.getSubtotal() * (1 - ((order.getCustomDiscount() != null ? order.getCustomDiscount() : 
+                                                (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0)) / 100.0)),
                                         new ProductResponse(
                                             item.getProduct().getId(),
                                             item.getProduct().getName(),
@@ -351,6 +322,91 @@ public class ReportController {
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(userSalesReports);
+    }
+    
+    @GetMapping("/product-ranking")
+    public ResponseEntity<?> getProductRanking(
+            @RequestParam(required = false) String period,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+        LocalDate finalStartDate;
+        LocalDate finalEndDate;
+
+        if (startDate != null && endDate != null) {
+            finalStartDate = startDate;
+            finalEndDate = endDate;
+        } else if (period != null && date != null) {
+            switch (period.toLowerCase()) {
+                case "day":
+                    finalStartDate = date;
+                    finalEndDate = date;
+                    break;
+                case "fortnight":
+                    finalStartDate = date.minusDays(13);
+                    finalEndDate = date;
+                    break;
+                case "month":
+                    finalStartDate = date.withDayOfMonth(1);
+                    finalEndDate = date.withDayOfMonth(date.lengthOfMonth());
+                    break;
+                default:
+                    return ResponseEntity.badRequest().body(new MessageResponse("Invalid period. Use 'day', 'fortnight', or 'month'."));
+            }
+        } else {
+            return ResponseEntity.badRequest().body(new MessageResponse("Either provide 'period' and 'date' or 'startDate' and 'endDate'."));
+        }
+
+        List<Order> orders = orderRepository.findByOrderDateBetween(finalStartDate, finalEndDate);
+        Map<Product, Integer> productQuantityMap = new HashMap<>();
+
+        Map<Product, Set<Long>> productOrdersMap = new HashMap<>();
+
+        for (Order order : orders) {
+             for (OrderItem item : order.getOrderItems()) {
+                 Product product = item.getProduct();
+                 
+                 productQuantityMap.put(product, productQuantityMap.getOrDefault(product, 0) + item.getQuantity());
+                 
+                 productOrdersMap.computeIfAbsent(product, k -> new HashSet<>()).add(order.getId());
+             }
+         }
+
+        List<ProductRankingResponse> productRanking = productQuantityMap.entrySet().stream()
+                .map(entry -> {
+                    Product product = entry.getKey();
+                    Integer totalQuantity = entry.getValue();
+                    Integer totalOrders = Integer.valueOf(productOrdersMap.get(product).size());
+
+                    ProductResponse productResponse = new ProductResponse(
+                            product.getId(),
+                            product.getName(),
+                            product.getFormaldehydePercentage(),
+                            product.getPrice(),
+                            product.getCost(),
+                            product.getType(),
+                            product.getCode(),
+                            product.getSize(),
+                            product.getCurrentStock(),
+                            product.getMinimumStock()
+                    );
+
+                    return new ProductRankingResponse(
+                            productResponse,
+                            totalQuantity, 
+                            totalOrders,
+                            0
+                    );
+                })
+                .sorted((p1, p2) -> Integer.compare(p2.getTotalQuantitySold(), p1.getTotalQuantitySold()))
+                .collect(Collectors.toList());
+
+        for (int i = 0; i < productRanking.size(); i++) {
+            productRanking.get(i).setRanking(Integer.valueOf(i + 1));
+        }
+
+        return ResponseEntity.ok(productRanking);
     }
     
 }

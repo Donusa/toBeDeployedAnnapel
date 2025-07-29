@@ -16,4 +16,5 @@ total: number;
 shippingMethod: string;
 paymentMethod: PaymentMethod;
 shippingCost: number;
+customDiscount?: number;
 }

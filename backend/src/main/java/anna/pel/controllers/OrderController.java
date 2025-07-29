@@ -148,14 +148,35 @@ public class OrderController {
         order.setDelivered(orderRequest.getDelivered());
         order.setPaid(orderRequest.getPaid());
         
+        // Calcular el total con descuento aplicado
+        Double discountToApply = orderRequest.getCustomDiscount() != null ? orderRequest.getCustomDiscount() : 
+                                (client.getDiscount() != null ? client.getDiscount() : 0.0);
+        
+        // Calcular subtotal de todos los items
+        Double subtotal = order.getOrderItems().stream()
+                .mapToDouble(item -> item.getQuantity() * item.getPrice())
+                .sum();
+        
+        // Aplicar descuento al subtotal
+        Double subtotalWithDiscount = subtotal;
+        if (discountToApply > 0) {
+            subtotalWithDiscount = subtotal * (1 - discountToApply / 100.0);
+        }
+        
+        // Calcular total final (subtotal con descuento + costo de envío)
+        Double totalWithDiscount = subtotalWithDiscount + (orderRequest.getShippingCost() != null ? orderRequest.getShippingCost() : 0.0);
+        
         // Si el pedido se marca como pagado, establecer la deuda en 0
         if (orderRequest.getPaid() != null && orderRequest.getPaid()) {
             order.setAmountDue(0.0);
         } else {
-            order.setAmountDue(orderRequest.getAmountDue());
+            // Usar el total calculado con descuento como amountDue si no se especifica otro valor
+            order.setAmountDue(orderRequest.getAmountDue() != null && orderRequest.getAmountDue() > 0 ? 
+                              orderRequest.getAmountDue() : totalWithDiscount);
         }
         order.setShippingMethod(orderRequest.getShippingMethod());
         order.setShippingCost(orderRequest.getShippingCost());
+        order.setCustomDiscount(orderRequest.getCustomDiscount());
         
         // Set payment method if provided
         if (orderRequest.getPaymentMethodId() != null) {
@@ -250,14 +271,35 @@ public class OrderController {
                     order.setDelivered(orderRequest.getDelivered());
                     order.setPaid(orderRequest.getPaid());
                     
+                    // Calcular el total con descuento aplicado
+                    Double discountToApply = orderRequest.getCustomDiscount() != null ? orderRequest.getCustomDiscount() : 
+                                            (client.getDiscount() != null ? client.getDiscount() : 0.0);
+                    
+                    // Calcular subtotal de todos los items
+                    Double subtotal = order.getOrderItems().stream()
+                            .mapToDouble(item -> item.getQuantity() * item.getPrice())
+                            .sum();
+                    
+                    // Aplicar descuento al subtotal
+                    Double subtotalWithDiscount = subtotal;
+                    if (discountToApply > 0) {
+                        subtotalWithDiscount = subtotal * (1 - discountToApply / 100.0);
+                    }
+                    
+                    // Calcular total final (subtotal con descuento + costo de envío)
+                    Double totalWithDiscount = subtotalWithDiscount + (orderRequest.getShippingCost() != null ? orderRequest.getShippingCost() : 0.0);
+                    
                     // Si el pedido se marca como pagado, establecer la deuda en 0
                     if (orderRequest.getPaid() != null && orderRequest.getPaid()) {
                         order.setAmountDue(0.0);
                     } else {
-                        order.setAmountDue(orderRequest.getAmountDue());
+                        // Usar el total calculado con descuento como amountDue si no se especifica otro valor
+                        order.setAmountDue(orderRequest.getAmountDue() != null && orderRequest.getAmountDue() > 0 ? 
+                                          orderRequest.getAmountDue() : totalWithDiscount);
                     }
                     order.setShippingMethod(orderRequest.getShippingMethod());
                     order.setShippingCost(orderRequest.getShippingCost());
+                    order.setCustomDiscount(orderRequest.getCustomDiscount());
                     
                     // Set payment method if provided
                     if (orderRequest.getPaymentMethodId() != null) {
@@ -327,7 +369,6 @@ public class OrderController {
     }
 
     private OrderResponse convertToResponse(Order order) {
-        // Convert client to ClientResponse
         ClientResponse clientResponse = new ClientResponse(
                 order.getClient().getId(),
                 order.getClient().getName(),
@@ -340,7 +381,7 @@ public class OrderController {
                 order.getClient().getLocation()
         );
         
-        // Convert seller to UserResponse
+
         UserResponse sellerResponse = new UserResponse(
                 order.getSeller().getId(),
                 order.getSeller().getUsername(),
@@ -349,17 +390,18 @@ public class OrderController {
                 order.getSeller().getCommissionPercentage()
         );
 
-        // Get client discount percentage
-        Double clientDiscount = order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0;
+      
+        Double discountToApply = order.getCustomDiscount() != null ? order.getCustomDiscount() : 
+                                (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0);
 
-        // Convert order items to OrderItemResponse list
+        
         List<OrderItemResponse> orderItemResponses = order.getOrderItems().stream()
                 .map(item -> {
                     Product product = item.getProduct();
-                    // Calculate subtotal with client discount applied
+
                     Double subtotalWithDiscount = item.getSubtotal();
-                    if (clientDiscount > 0) {
-                        subtotalWithDiscount = item.getSubtotal() * (1 - clientDiscount / 100.0);
+                    if (discountToApply > 0) {
+                        subtotalWithDiscount = item.getSubtotal() * (1 - discountToApply / 100.0);
                     }
                     return new OrderItemResponse(
                             item.getId(),
@@ -385,12 +427,11 @@ public class OrderController {
                 })
                 .collect(Collectors.toList());
 
-        // Calculate subtotal (sum of all order items subtotals with discount already applied)
+      
         Double subtotalWithDiscount = orderItemResponses.stream()
                 .mapToDouble(OrderItemResponse::getSubtotal)
                 .sum();
 
-        // Calculate total (subtotal with discount + shipping cost)
         Double total = subtotalWithDiscount + order.getShippingCost();
 
         return new OrderResponse(
@@ -402,11 +443,12 @@ public class OrderController {
                 order.getDeliveryDate(),
                 order.getDelivered(),
                 order.getPaid(),
-                order.getAmountDue(), // Use the actual debt amount for this specific order
-                total, // Use the calculated total with discount
+                order.getAmountDue(),
+                total,
                 order.getShippingMethod(),
                 order.getPaymentMethod(),
-                order.getShippingCost()
+                order.getShippingCost(),
+                order.getCustomDiscount()
         );
     }
 }

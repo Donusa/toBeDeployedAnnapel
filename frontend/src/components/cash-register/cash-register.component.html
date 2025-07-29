@@ -73,4 +73,62 @@
       </mat-card>
     </div>
   </div>
+
+  <!-- Product Ranking Section - Solo para Administradores -->
+  <div class="product-ranking-section" *ngIf="isAdmin">
+    <h3>Ranking de Productos</h3>
+    
+    <!-- Product Ranking Controls -->
+    <div class="ranking-controls">
+      <mat-form-field appearance="outline">
+          <mat-label>Fecha Desde</mat-label>
+          <input matInput [matDatepicker]="startPicker" [(ngModel)]="startDate" (dateChange)="onStartDateChange()">
+          <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+          <mat-datepicker #startPicker></mat-datepicker>
+        </mat-form-field>
+      
+      <mat-form-field appearance="outline">
+          <mat-label>Fecha Hasta</mat-label>
+          <input matInput [matDatepicker]="endPicker" [(ngModel)]="endDate" [min]="startDate" (dateChange)="onDateRangeChange()">
+          <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+          <mat-datepicker #endPicker></mat-datepicker>
+        </mat-form-field>
+    </div>
+
+    <!-- Product Ranking Table -->
+    <mat-table [dataSource]="productRankingDataSource" class="mat-elevation-z8 ranking-table">
+      <ng-container matColumnDef="ranking">
+        <mat-header-cell *matHeaderCellDef> # </mat-header-cell>
+        <mat-cell *matCellDef="let element" class="ranking-cell">
+          <span class="ranking-badge" [ngClass]="{
+            'top-1': element.ranking === 1,
+            'top-2': element.ranking === 2,
+            'top-3': element.ranking === 3
+          }">
+            {{element.ranking}}
+          </span>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="product">
+        <mat-header-cell *matHeaderCellDef> Producto </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{element.product.name}} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="quantity">
+        <mat-header-cell *matHeaderCellDef> Cantidad Vendida </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{element.totalQuantitySold}} </mat-cell>
+      </ng-container>
+
+
+
+      <ng-container matColumnDef="orders">
+        <mat-header-cell *matHeaderCellDef> Órdenes </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{element.totalOrders}} </mat-cell>
+      </ng-container>
+
+      <mat-header-row *matHeaderRowDef="productRankingColumns"></mat-header-row>
+      <mat-row *matRowDef="let row; columns: productRankingColumns;"></mat-row>
+    </mat-table>
+  </div>
 </div>

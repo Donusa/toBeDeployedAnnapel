@@ -25,4 +25,5 @@ public class OrderResponse {
     private String shippingMethod;
     private PaymentMethod paymentMethod;
     private Double shippingCost;
+    private Double customDiscount;
 }

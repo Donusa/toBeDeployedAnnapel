@@ -4,13 +4,20 @@ import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatInputModule } from '@angular/material/input';
+import { MatNativeDateModule } from '@angular/material/core';
 import { Router } from '@angular/router';
 import { CommonModule, CurrencyPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { AuthenticationService } from 'src/app/services/authentication.service';
 import { MatDialog } from '@angular/material/dialog';
 import { SalesDetailsDialogComponent } from './sales-details-dialog/sales-details-dialog.component';
 import { ReportService } from 'src/app/services/report.service';
 import { DailyCashRegisterResponse } from 'src/responses/dailyCashRegisterResponse.interface';
+import { ProductRankingResponse } from 'src/responses/productRankingResponse.interface';
 
 @Component({
   selector: 'app-cash-register',
@@ -19,10 +26,16 @@ import { DailyCashRegisterResponse } from 'src/responses/dailyCashRegisterRespon
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatTableModule,
     MatCardModule,
     MatIconModule,
     MatButtonModule,
+    MatSelectModule,
+    MatFormFieldModule,
+    MatDatepickerModule,
+    MatInputModule,
+    MatNativeDateModule,
     CurrencyPipe
   ]
 })
@@ -37,6 +50,12 @@ export class CashRegisterComponent implements OnInit {
   selectedDate: Date = new Date();
   userSalesData: any[] = [];
 
+  // Product ranking properties
+  productRankingColumns: string[] = ['ranking', 'product', 'quantity', 'orders'];
+  productRankingDataSource = new MatTableDataSource<ProductRankingResponse>();
+  startDate: Date = new Date();
+  endDate: Date = new Date();
+
   constructor(
     private reportService: ReportService,
     private authService: AuthenticationService,
@@ -47,6 +66,9 @@ export class CashRegisterComponent implements OnInit {
   ngOnInit(): void {
     this.checkUserRole();
     this.loadCashRegisterData();
+    if (this.isAdmin) {
+      this.loadProductRanking();
+    }
   }
 
   loadCashRegisterData(): void {
@@ -109,5 +131,31 @@ export class CashRegisterComponent implements OnInit {
       data: row.details
     });
   }
-   
+
+  loadProductRanking(): void {
+    this.reportService.getProductRankingByDateRange(this.startDate, this.endDate).subscribe({
+      next: (response: ProductRankingResponse[]) => {
+        this.productRankingDataSource.data = response;
+      },
+      error: (error) => {
+        this.handleError(error, 'Error al cargar el ranking de productos');
+      }
+    });
+  }
+
+  onDateRangeChange(): void {
+    // Si la fecha hasta es anterior a la fecha desde, ajustarla automáticamente
+    if (this.endDate < this.startDate) {
+      this.endDate = new Date(this.startDate);
+    }
+    this.loadProductRanking();
+  }
+
+  onStartDateChange(): void {
+    // Si la fecha hasta es anterior a la nueva fecha desde, ajustarla
+    if (this.endDate < this.startDate) {
+      this.endDate = new Date(this.startDate);
+    }
+    this.loadProductRanking();
+  }
 }

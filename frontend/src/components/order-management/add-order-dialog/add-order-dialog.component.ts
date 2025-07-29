@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormArray, FormControl, ReactiveFormsModule, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, FormArray, FormControl, ReactiveFormsModule, ValidatorFn, AbstractControl, ValidationErrors, FormsModule } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
@@ -16,6 +16,7 @@ import { OrderService } from '../../../app/services/order.service';
 import { PdfService } from '../../../app/services/pdf.service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { Product } from '../../../interfaces/product.interface'; 
 
 @Component({
@@ -26,6 +27,7 @@ import { Product } from '../../../interfaces/product.interface';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
@@ -34,7 +36,8 @@ import { Product } from '../../../interfaces/product.interface';
     MatDatepickerModule,
     MatNativeDateModule,
     MatIconModule,
-    MatAutocompleteModule
+    MatAutocompleteModule,
+    MatSlideToggleModule
   ]
 })
 export class AddOrderDialogComponent implements OnInit {
@@ -43,6 +46,8 @@ export class AddOrderDialogComponent implements OnInit {
   products: any[] = [];
   shippingMethods: string[] = ['RETIRA_SIN_COSTO', 'ENVIO_DOMICILIO', 'ENVIO_CORREO'];
   minDate: Date = new Date();
+  selectedClient: any = null;
+  useCustomDiscount: boolean = false;
   
   clientSearchControl = new FormControl();
   productSearchControls: FormControl[] = [];
@@ -67,7 +72,8 @@ export class AddOrderDialogComponent implements OnInit {
       amountDue: [0.0],
       paymentMethodId: [null, Validators.required],
       shippingCost: [0.0],
-      sellerId: [localStorage.getItem('id')]
+      sellerId: [localStorage.getItem('id')],
+      customDiscount: [null, [Validators.min(0), Validators.max(100)]]
     });
 
     this.filteredClients = this.clientSearchControl.valueChanges.pipe(
@@ -250,6 +256,27 @@ export class AddOrderDialogComponent implements OnInit {
     this.dialogRef.close();
   }
 
+  onDiscountTypeChange(): void {
+    if (this.useCustomDiscount) {
+      this.orderForm.get('customDiscount')?.setValidators([Validators.min(0), Validators.max(100)]);
+    } else {
+      this.orderForm.get('customDiscount')?.clearValidators();
+      this.orderForm.get('customDiscount')?.setValue(null);
+    }
+    this.orderForm.get('customDiscount')?.updateValueAndValidity();
+  }
+
+  getClientDiscount(): number {
+    return this.selectedClient?.discount || 0;
+  }
+
+  getAppliedDiscount(): number {
+    if (this.useCustomDiscount) {
+      return this.orderForm.get('customDiscount')?.value || 0;
+    }
+    return this.getClientDiscount();
+  }
+
   get productForms() {
     return this.orderForm.get('products') as FormArray;
   }
@@ -265,6 +292,7 @@ export class AddOrderDialogComponent implements OnInit {
 
     this.clientSearchControl.valueChanges.subscribe(client => {
       if (client && client.id) {
+        this.selectedClient = client;
         this.orderForm.patchValue({
           clientId: client.id
         });

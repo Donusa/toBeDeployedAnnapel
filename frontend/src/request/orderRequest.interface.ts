@@ -10,4 +10,5 @@ amountDue: number;
 shippingMethod: string;
 paymentMethodId: number;
 shippingCost: number;
+customDiscount?: number;
 }

@@ -58,4 +58,9 @@ public class Order {
     
     @Column(nullable = false)
     private Double shippingCost = 0.0;
+    
+    @DecimalMin(value = "0.0")
+    @DecimalMax(value = "100.0")
+    @Column
+    private Double customDiscount;
 }

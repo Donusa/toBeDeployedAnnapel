@@ -18,4 +18,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByDelivered(Boolean delivered);
     List<Order> findByPaid(Boolean paid);
     List<Order> findByOrderDate(LocalDate startDate);
+    List<Order> findByOrderDateBetween(LocalDate startDate, LocalDate endDate);
 }

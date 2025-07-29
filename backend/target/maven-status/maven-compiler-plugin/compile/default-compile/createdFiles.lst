@@ -16,6 +16,7 @@ anna\pel\payload\response\OrderItemResponse.class
 anna\pel\payload\response\ProductResponse.class
 anna\pel\repository\OrderRepository.class
 anna\pel\payload\request\OrderItemRequest.class
+anna\pel\payload\response\ProductRankingResponse.class
 anna\pel\model\Order.class
 anna\pel\repository\UserRepository.class
 anna\pel\security\services\UserDetailsImpl.class

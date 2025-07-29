@@ -125,3 +125,42 @@ mat-dialog-actions {
     margin-bottom: 16px;
   }
 }
+
+/* Estilos para la sección de descuentos */
+.discount-section {
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.discount-section h3 {
+  margin: 0 0 16px 0;
+  color: #333;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.client-discount-info,
+.applied-discount-info {
+  margin: 12px 0;
+  padding: 8px;
+  background-color: #fff;
+  border-radius: 4px;
+  border-left: 4px solid #2196f3;
+}
+
+.client-discount-info p,
+.applied-discount-info p {
+  margin: 0;
+  font-size: 14px;
+}
+
+::ng-deep .discount-section .mat-mdc-slide-toggle {
+  margin: 16px 0;
+}
+
+::ng-deep .discount-section .mat-mdc-slide-toggle .mdc-form-field {
+  color: #333;
+}

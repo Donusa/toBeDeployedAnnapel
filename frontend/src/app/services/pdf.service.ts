@@ -49,14 +49,17 @@ export class PdfService {
     doc.setFontSize(10);
     doc.text(`Cliente: ${ticket.client.name}`, 10, 55);
     doc.text(`Teléfono: ${ticket.client.phone}`, 10, 60);
+    if (ticket.client.dni) {
+      doc.text(`DNI: ${ticket.client.dni}`, 10, 65);
+    }
     if (ticket.client.address) {
-      doc.text(`Dirección: ${ticket.client.address}`, 10, 65);
+      doc.text(`Dirección: ${ticket.client.address}`, 10, ticket.client.dni ? 70 : 65);
     }
     
     doc.setFontSize(12);
-    doc.text('Vendedor', 10, 75);
+    doc.text('Vendedor', 10, 80);
     doc.setFontSize(10);
-    doc.text(`Nombre: ${ticket.seller.username}`, 10, 80);
+    doc.text(`Nombre: ${ticket.seller.username}`, 10, 85);
 
     const tableColumn = ['Producto', 'Código', 'Cantidad', 'Precio', 'Subtotal'];
     const tableRows: any[] = [];
@@ -83,7 +86,7 @@ export class PdfService {
     (doc as any).autoTable({
       head: [tableColumn],
       body: tableRows,
-      startY: 85,
+      startY: 90,
       theme: 'grid',
       styles: {
         fontSize: 8,

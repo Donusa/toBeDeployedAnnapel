@@ -33,4 +33,9 @@ public class OrderRequest {
     
     @DecimalMin(value = "0.0")
     private Double shippingCost = 0.0;
+    
+    @DecimalMin(value = "0.0")
+    @DecimalMax(value = "100.0")
+    private Double customDiscount;
+
 }
