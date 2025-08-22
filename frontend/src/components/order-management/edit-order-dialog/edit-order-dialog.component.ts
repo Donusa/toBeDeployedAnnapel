@@ -1,5 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, FormArray, ReactiveFormsModule, FormControl, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, FormArray, ReactiveFormsModule, FormControl, ValidatorFn, AbstractControl, ValidationErrors, FormsModule } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -11,6 +11,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { ClientService } from '../../../app/services/client.service';
 import { ProductService } from '../../../app/services/product.service';
 import { Observable } from 'rxjs';
@@ -24,6 +25,7 @@ import { map, startWith } from 'rxjs/operators';
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    FormsModule,
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
@@ -33,7 +35,8 @@ import { map, startWith } from 'rxjs/operators';
     MatNativeDateModule,
     MatIconModule,
     MatCheckboxModule,
-    MatAutocompleteModule
+    MatAutocompleteModule,
+    MatSlideToggleModule
   ]
 })
 export class EditOrderDialogComponent implements OnInit {
@@ -50,6 +53,8 @@ export class EditOrderDialogComponent implements OnInit {
   
   isPaidDisabled: boolean = false;
   isDeliveredDisabled: boolean = false;
+  useCustomDiscount: boolean = false;
+  selectedClient: any = null;
 
   constructor(
     private fb: FormBuilder,
@@ -70,8 +75,12 @@ export class EditOrderDialogComponent implements OnInit {
       delivered: [data.delivered || false],
       paymentMethodId: [data.paymentMethod?.id || 1, Validators.required],
       shippingCost: [data.shippingCost || 0],
-      amountDue: [data.amountDue || 0]
+      amountDue: [data.amountDue || 0],
+      customDiscount: [data.customDiscount || null, [Validators.min(0), Validators.max(100)]]
     });
+    
+    // Inicializar useCustomDiscount basado en si hay un descuento personalizado
+    this.useCustomDiscount = data.customDiscount !== undefined && data.customDiscount !== null;
 
     this.filteredClients = this.clientSearchControl.valueChanges.pipe(
       startWith(''),
@@ -87,7 +96,14 @@ export class EditOrderDialogComponent implements OnInit {
       this.clients = clients;
       const selectedClient = this.clients.find(c => c.id === (this.data?.client?.id || this.data?.clientId));
       if (selectedClient) {
+        this.selectedClient = selectedClient;
         this.clientSearchControl.setValue(selectedClient, { emitEvent: false });
+      }
+    });
+    
+    this.clientSearchControl.valueChanges.subscribe(client => {
+      if (client && client.id) {
+        this.selectedClient = client;
       }
     });
     
@@ -312,7 +328,9 @@ export class EditOrderDialogComponent implements OnInit {
         ...rawFormValue,
         id: this.data.id,
         clientId: this.clientSearchControl.value?.id || this.data.client?.id,
-        products: this.productForms.value
+        products: this.productForms.value,
+        // Si no se usa descuento personalizado, enviamos null para que use el del cliente
+        customDiscount: this.useCustomDiscount ? rawFormValue.customDiscount : null
       };
       this.dialogRef.close(formData);
     } else {
@@ -323,6 +341,27 @@ export class EditOrderDialogComponent implements OnInit {
         }
       });
     }
+  }
+  
+  getClientDiscount(): number {
+    return this.selectedClient?.discount || 0;
+  }
+  
+  getAppliedDiscount(): number {
+    if (this.useCustomDiscount) {
+      return this.orderForm.get('customDiscount')?.value || 0;
+    }
+    return this.getClientDiscount();
+  }
+  
+  onDiscountTypeChange(): void {
+    if (this.useCustomDiscount) {
+      this.orderForm.get('customDiscount')?.setValidators([Validators.min(0), Validators.max(100)]);
+    } else {
+      this.orderForm.get('customDiscount')?.clearValidators();
+      this.orderForm.get('customDiscount')?.setValue(null);
+    }
+    this.orderForm.get('customDiscount')?.updateValueAndValidity();
   }
 
   onCancel(): void {

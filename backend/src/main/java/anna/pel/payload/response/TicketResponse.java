@@ -21,4 +21,5 @@ public class TicketResponse {
     private Double total;
     private String paymentMethodName;
     private Boolean paid;
+    private Double discount;
 }

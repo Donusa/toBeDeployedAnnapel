@@ -113,7 +113,8 @@ public class ReportController {
                             order.getShippingCost(),
                             total,
                             paymentMethodName,
-                            order.getPaid()
+                            order.getPaid(),
+                            order.getCustomDiscount() 
                     );
 
                     return ResponseEntity.ok(ticketResponse);

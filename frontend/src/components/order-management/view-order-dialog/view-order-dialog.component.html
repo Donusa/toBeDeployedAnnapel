@@ -6,6 +6,7 @@
     <p><strong>Nombre:</strong> {{data.client.name}}</p>
     <p><strong>Teléfono:</strong> {{data.client.phone}}</p>
     <p><strong>Dirección:</strong> {{data.client.address}}</p>
+    <p><strong>Descuento del cliente:</strong> {{data.client.discount || 0}}%</p>
 
     <h3>Información del Pedido</h3>
     <p><strong>Fecha de Pedido:</strong> {{data.orderDate | date:'dd/MM/yyyy'}}</p>
@@ -18,6 +19,7 @@
         data.paymentMethod.name === 'TRANSFER'? 'Transferencia' :
         data.paymentMethod.name
     }}</p>
+    <p><strong>Descuento aplicado:</strong> {{data.customDiscount ? data.customDiscount : (data.client.discount || 0)}}%</p>
     <p><strong>Método de Envío:</strong> {{
         data.shippingMethod === 'RETIRA_SIN_COSTO' ? 'Retira en el local sin costo' :
         data.shippingMethod === 'ENVIO_DOMICILIO' ? 'Envío a domicilio con costo' :

@@ -9,7 +9,8 @@ export interface TicketResponse {
  products: ProductTicketResponse[],
  subtotal: number,
  shippingCost: number,
- total: number
- paymentMethodName: string
- paid: boolean
+ total: number,
+ paymentMethodName: string,
+ paid: boolean,
+ discount: number
 }

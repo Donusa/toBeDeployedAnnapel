@@ -94,6 +94,34 @@
       </mat-form-field>
     </div>
 
+    <div class="form-row discount-section" *ngIf="clientSearchControl.value">
+      <div class="client-discount-info">
+        <p><strong>Descuento del cliente:</strong> {{getClientDiscount()}}%</p>
+      </div>
+
+      <mat-slide-toggle 
+        [(ngModel)]="useCustomDiscount" 
+        (change)="onDiscountTypeChange()"
+        [ngModelOptions]="{standalone: true}">
+        Usar descuento personalizado
+      </mat-slide-toggle>
+
+      <mat-form-field appearance="outline" class="full-width" *ngIf="useCustomDiscount">
+        <mat-label>Descuento personalizado (%)</mat-label>
+        <input matInput type="number" formControlName="customDiscount" min="0" max="100" step="0.1">
+        <mat-error *ngIf="orderForm.get('customDiscount')?.hasError('min')">
+          El descuento no puede ser negativo
+        </mat-error>
+        <mat-error *ngIf="orderForm.get('customDiscount')?.hasError('max')">
+          El descuento no puede ser mayor a 100%
+        </mat-error>
+      </mat-form-field>
+
+      <div class="applied-discount-info" *ngIf="clientSearchControl.value">
+        <p><strong>Descuento aplicado:</strong> {{getAppliedDiscount()}}%</p>
+      </div>
+    </div>
+
     <div class="form-row">
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>A pagar</mat-label>
