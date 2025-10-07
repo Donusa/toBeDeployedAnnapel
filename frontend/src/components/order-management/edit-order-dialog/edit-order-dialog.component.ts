@@ -76,10 +76,10 @@ export class EditOrderDialogComponent implements OnInit {
       paymentMethodId: [data.paymentMethod?.id || 1, Validators.required],
       shippingCost: [data.shippingCost || 0],
       amountDue: [data.amountDue || 0],
-      customDiscount: [data.customDiscount || null, [Validators.min(0), Validators.max(100)]]
+      customDiscount: [data.customDiscount || null, [Validators.min(0), Validators.max(100), Validators.pattern(/^\d+(\.\d{1,2})?$/)]]
     });
     
-    // Inicializar useCustomDiscount basado en si hay un descuento personalizado
+    
     this.useCustomDiscount = data.customDiscount !== undefined && data.customDiscount !== null;
 
     this.filteredClients = this.clientSearchControl.valueChanges.pipe(
@@ -356,12 +356,21 @@ export class EditOrderDialogComponent implements OnInit {
   
   onDiscountTypeChange(): void {
     if (this.useCustomDiscount) {
-      this.orderForm.get('customDiscount')?.setValidators([Validators.min(0), Validators.max(100)]);
+      this.orderForm.get('customDiscount')?.setValidators([Validators.min(0), Validators.max(100), Validators.pattern(/^\d+(\.\d{1,2})?$/)]);
     } else {
       this.orderForm.get('customDiscount')?.clearValidators();
       this.orderForm.get('customDiscount')?.setValue(null);
     }
     this.orderForm.get('customDiscount')?.updateValueAndValidity();
+  }
+  
+  formatDecimal(controlName: string): void {
+    const control = this.orderForm.get(controlName);
+    if (control && control.value !== null && control.value !== '') {
+      // Limitar a 2 decimales
+      const formattedValue = parseFloat(control.value).toFixed(2);
+      control.setValue(parseFloat(formattedValue));
+    }
   }
 
   onCancel(): void {

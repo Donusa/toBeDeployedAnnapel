@@ -73,7 +73,7 @@ export class AddOrderDialogComponent implements OnInit {
       paymentMethodId: [null, Validators.required],
       shippingCost: [0.0],
       sellerId: [localStorage.getItem('id')],
-      customDiscount: [null, [Validators.min(0), Validators.max(100)]]
+      customDiscount: [null, [Validators.min(0), Validators.max(100), Validators.pattern(/^\d+(\.\d{1,2})?$/)]]
     });
 
     this.filteredClients = this.clientSearchControl.valueChanges.pipe(
@@ -258,12 +258,21 @@ export class AddOrderDialogComponent implements OnInit {
 
   onDiscountTypeChange(): void {
     if (this.useCustomDiscount) {
-      this.orderForm.get('customDiscount')?.setValidators([Validators.min(0), Validators.max(100)]);
+      this.orderForm.get('customDiscount')?.setValidators([Validators.min(0), Validators.max(100), Validators.pattern(/^\d+(\.\d{1,2})?$/)]);
     } else {
       this.orderForm.get('customDiscount')?.clearValidators();
       this.orderForm.get('customDiscount')?.setValue(null);
     }
     this.orderForm.get('customDiscount')?.updateValueAndValidity();
+  }
+  
+  formatDecimal(controlName: string): void {
+    const control = this.orderForm.get(controlName);
+    if (control && control.value !== null && control.value !== '') {
+      // Limitar a 2 decimales
+      const formattedValue = parseFloat(control.value).toFixed(2);
+      control.setValue(parseFloat(formattedValue));
+    }
   }
 
   getClientDiscount(): number {
