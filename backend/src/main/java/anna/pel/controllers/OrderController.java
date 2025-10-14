@@ -2,6 +2,8 @@ package anna.pel.controllers;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -103,7 +105,7 @@ public class OrderController {
             return ResponseEntity.badRequest()
                     .body(new MessageResponse("Error: Client not found!"));
         }
-        
+
         // Validate seller exists
         User seller = userRepository.findById(orderRequest.getSellerId())
                 .orElse(null);
@@ -112,12 +114,12 @@ public class OrderController {
                     .body(new MessageResponse("Error: Seller not found!"));
         }
 
-        // Validate products exist and create order items
+        // Create order
         Order order = new Order();
         order.setClient(client);
         order.setSeller(seller);
-        
-        // Asumiendo que OrderRequest ahora tiene una lista de items con producto y cantidad
+
+        // Validate and add order items
         if (orderRequest.getOrderItems() != null && !orderRequest.getOrderItems().isEmpty()) {
             for (OrderItemRequest itemRequest : orderRequest.getOrderItems()) {
                 Product product = productRepository.findById(itemRequest.getProductId()).orElse(null);
@@ -125,79 +127,99 @@ public class OrderController {
                     return ResponseEntity.badRequest()
                             .body(new MessageResponse("Error: Product with ID " + itemRequest.getProductId() + " not found!"));
                 }
-                
-                // Verificar si hay suficiente stock disponible
+
+                // Check stock
                 if (product.getCurrentStock() < itemRequest.getQuantity()) {
                     return ResponseEntity.badRequest()
                             .body(new MessageResponse("Error: Stock insuficiente para el producto " + product.getName() + ". Stock disponible: " + product.getCurrentStock()));
                 }
-                
-                // Reducir el stock del producto
+
+                // Update stock
                 product.setCurrentStock(product.getCurrentStock() - itemRequest.getQuantity());
                 productRepository.save(product);
-                
+
+                // Create order item
                 OrderItem orderItem = new OrderItem();
                 orderItem.setOrder(order);
                 orderItem.setProduct(product);
                 orderItem.setQuantity(itemRequest.getQuantity());
-                orderItem.setPrice(product.getPrice()); // Usar el precio actual del producto
+                orderItem.setPrice(product.getPrice());
                 order.getOrderItems().add(orderItem);
             }
         }
+
         order.setDeliveryDate(orderRequest.getDeliveryDate());
         order.setDelivered(orderRequest.getDelivered());
         order.setPaid(orderRequest.getPaid());
-        
-        // Calcular el total con descuento aplicado
-        Double discountToApply = orderRequest.getCustomDiscount() != null ? orderRequest.getCustomDiscount() : 
-                                (client.getDiscount() != null ? client.getDiscount() : 0.0);
-        
-        // Calcular subtotal de todos los items
-        Double subtotal = order.getOrderItems().stream()
-                .mapToDouble(item -> item.getQuantity() * item.getPrice())
-                .sum();
-        
-        // Aplicar descuento al subtotal
-        Double subtotalWithDiscount = subtotal;
-        if (discountToApply > 0) {
-            subtotalWithDiscount = subtotal * (1 - discountToApply / 100.0);
-        }
-        
-        // Calcular total final (subtotal con descuento + costo de envío)
-        Double totalWithDiscount = subtotalWithDiscount + (orderRequest.getShippingCost() != null ? orderRequest.getShippingCost() : 0.0);
-        
-        // Si el pedido se marca como pagado, establecer la deuda en 0
-        if (orderRequest.getPaid() != null && orderRequest.getPaid()) {
-            order.setAmountDue(0.0);
-        } else {
-            // Usar el total calculado con descuento como amountDue si no se especifica otro valor
-            order.setAmountDue(orderRequest.getAmountDue() != null && orderRequest.getAmountDue() > 0 ? 
-                              orderRequest.getAmountDue() : totalWithDiscount);
-        }
         order.setShippingMethod(orderRequest.getShippingMethod());
         order.setShippingCost(orderRequest.getShippingCost());
         order.setCustomDiscount(orderRequest.getCustomDiscount());
-        
+
+        // ===================== CALCULOS MONETARIOS CON BIGDECIMAL =====================
+
+        // Subtotal
+        BigDecimal subtotal = order.getOrderItems().stream()
+                .map(item -> BigDecimal.valueOf(item.getPrice())
+                        .multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Descuento a aplicar
+        BigDecimal discountToApply = BigDecimal.valueOf(
+                orderRequest.getCustomDiscount() != null
+                        ? orderRequest.getCustomDiscount()
+                        : (client.getDiscount() != null ? client.getDiscount() : 0.0)
+        );
+
+        // Aplicar descuento si existe
+        BigDecimal subtotalWithDiscount = subtotal;
+        if (discountToApply.compareTo(BigDecimal.ZERO) > 0) {
+            subtotalWithDiscount = subtotal.multiply(
+                    BigDecimal.ONE.subtract(
+                            discountToApply.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)
+                    )
+            );
+        }
+
+        // Costo de envío (manejar null)
+        BigDecimal shippingCost = BigDecimal.valueOf(
+                orderRequest.getShippingCost() != null ? orderRequest.getShippingCost() : 0.0
+        );
+
+        // Total final con redondeo
+        BigDecimal totalWithDiscount = subtotalWithDiscount
+                .add(shippingCost)
+                .setScale(2, RoundingMode.HALF_UP);
+
+        // ===================== FIN CALCULOS =====================
+
+        // Deuda (si está pagado, 0)
+        if (Boolean.TRUE.equals(orderRequest.getPaid())) {
+            order.setAmountDue(0.0);
+        } else {
+            double amountDue = (orderRequest.getAmountDue() != null && orderRequest.getAmountDue() > 0)
+                    ? orderRequest.getAmountDue()
+                    : totalWithDiscount.doubleValue();
+            order.setAmountDue(amountDue);
+        }
+
         // Set payment method if provided
         if (orderRequest.getPaymentMethodId() != null) {
             paymentMethodRepository.findById(orderRequest.getPaymentMethodId())
                     .ifPresent(order::setPaymentMethod);
         }
 
+        // Guardar orden
         Order savedOrder = orderRepository.save(order);
-        
-        // Actualizar la deuda del cliente (currentAccount) si la orden tiene deuda pendiente
-        // Usar el amountDue del pedido guardado (que ya es 0 si está pagado)
+
+        // Actualizar cuenta corriente del cliente si hay deuda
         if (savedOrder.getAmountDue() != null && savedOrder.getAmountDue() > 0) {
-            // Inicializar currentAccount si es null
             if (client.getCurrentAccount() == null) {
                 client.setCurrentAccount(0.0);
             }
-            // Sumar la deuda de la orden a la cuenta corriente del cliente
             client.setCurrentAccount(client.getCurrentAccount() + savedOrder.getAmountDue());
             clientRepository.save(client);
         }
-        
+
         return ResponseEntity.ok(convertToResponse(savedOrder));
     }
     
