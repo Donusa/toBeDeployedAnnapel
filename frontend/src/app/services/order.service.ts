@@ -45,4 +45,8 @@ export class OrderService {
     });
   }
 
+  getOrdersByClient(clientId: number): Observable<OrderResponse[]> {
+    return this.http.get<OrderResponse[]>(`${this.apiUrl}${environment.endpoints.orders.getByClient}${clientId}`);
+  }
+
 }

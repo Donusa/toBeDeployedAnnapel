@@ -17,7 +17,55 @@
     <mat-icon matSuffix>search</mat-icon>
   </mat-form-field>
 
+  <div class="bulk-actions">
+    <div class="bulk-left">
+      <span class="selection-info">Seleccionados: {{selection.selected.length}}</span>
+      <button mat-stroked-button (click)="selectFiltered()" [disabled]="dataSource.filteredData.length === 0">Seleccionar filtrados</button>
+      <button mat-stroked-button (click)="clearSelection()" [disabled]="selection.selected.length === 0">Limpiar</button>
+      <button mat-raised-button style="background-color: #333333; color: white;" (click)="openBulkEditDialog()" [disabled]="selection.selected.length === 0">
+        <mat-icon>edit</mat-icon> Edición masiva
+      </button>
+    </div>
+
+    <div class="bulk-right">
+      <mat-form-field appearance="outline" class="group-by">
+        <mat-label>Agrupar por</mat-label>
+        <mat-select [(ngModel)]="groupBy" (selectionChange)="onGroupByChange()">
+          <mat-option value="type">Tipo</mat-option>
+          <mat-option value="size">Tamaño</mat-option>
+          <mat-option value="formaldehydePercentage">Formol %</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="group-value">
+        <mat-label>Valor</mat-label>
+        <mat-select [(ngModel)]="groupValue">
+          <mat-option *ngFor="let v of getGroupValues()" [value]="v">{{v}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-stroked-button (click)="selectGroup()" [disabled]="!groupValue">Seleccionar grupo</button>
+    </div>
+  </div>
+
   <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+    <ng-container matColumnDef="select">
+      <mat-header-cell *matHeaderCellDef>
+        <mat-checkbox
+          (change)="masterToggle()"
+          [checked]="isAllSelected()"
+          [indeterminate]="selection.hasValue() && !isAllSelected()">
+        </mat-checkbox>
+      </mat-header-cell>
+      <mat-cell *matCellDef="let element">
+        <mat-checkbox
+          (click)="$event.stopPropagation()"
+          (change)="selection.toggle(element)"
+          [checked]="selection.isSelected(element)">
+        </mat-checkbox>
+      </mat-cell>
+    </ng-container>
+
     <ng-container matColumnDef="name">
       <mat-header-cell *matHeaderCellDef> Nombre </mat-header-cell>
       <mat-cell *matCellDef="let element"> {{element.name}} </mat-cell>

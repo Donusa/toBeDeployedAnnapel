@@ -3,15 +3,15 @@ package anna.pel.controllers;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,17 +25,15 @@ import anna.pel.model.Product;
 import anna.pel.model.User;
 import anna.pel.payload.response.ClientResponse;
 import anna.pel.payload.response.DailyCashRegisterResponse;
-import anna.pel.payload.response.OrderResponse;
+import anna.pel.payload.response.MessageResponse;
 import anna.pel.payload.response.OrderItemResponse;
+import anna.pel.payload.response.OrderResponse;
+import anna.pel.payload.response.ProductRankingResponse;
 import anna.pel.payload.response.ProductResponse;
 import anna.pel.payload.response.ProductTicketResponse;
 import anna.pel.payload.response.TicketResponse;
 import anna.pel.payload.response.UserCommissionResponse;
 import anna.pel.payload.response.UserResponse;
-import anna.pel.payload.response.ProductRankingResponse;
-import anna.pel.payload.response.MessageResponse;
-import java.util.Set;
-import java.util.HashSet;
 import anna.pel.repository.OrderRepository;
 import anna.pel.repository.UserRepository;
 
@@ -179,13 +177,25 @@ public class ReportController {
                 .mapToDouble(Order::getShippingCost)
                 .sum();
 
-        User adminUser = userRepository.findAll().stream()
-                .filter(user -> user.getRole() == User.Role.ADMIN)
-                .findFirst()
-                .orElse(null);
-
-        double commissionPercentage = adminUser != null ? adminUser.getCommissionPercentage() : 0.0;
-        double commissionAmount = totalIncome * (commissionPercentage / 100.0);
+        double commissionAmount = dailyOrders.stream()
+                .mapToDouble(order -> {
+                    Double discountToApply = order.getCustomDiscount() != null ? order.getCustomDiscount() : 
+                            (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0);
+                    
+                    Double orderTotal = order.getOrderItems().stream()
+                            .mapToDouble(item -> {
+                                Double subtotalWithDiscount = item.getSubtotal();
+                                if (discountToApply > 0) {
+                                    subtotalWithDiscount = item.getSubtotal() * (1 - discountToApply / 100.0);
+                                }
+                                return subtotalWithDiscount;
+                            })
+                            .sum();
+                    
+                    return orderTotal * (order.getSeller().getCommissionPercentage() / 100.0);
+                })
+                .sum();
+        
         DailyCashRegisterResponse response = new DailyCashRegisterResponse();
         response.setDate(date);
         response.setProductsSold(productsSold);
@@ -193,7 +203,8 @@ public class ReportController {
         response.setCardIncome(cardIncome);
         response.setTransferIncome(transferIncome);
         response.setTotalIncome(totalIncome);
-        response.setCommissionPercentage(commissionPercentage);
+        // We can set commissionPercentage to 0 or average, or remove it, but for now let's leave it as 0 or ignore it since it varies per user.
+        response.setCommissionPercentage(0.0); 
         response.setCommissionAmount(commissionAmount);
         response.setShippingPayments(shippingPayments);
 
@@ -219,108 +230,150 @@ public class ReportController {
 
     @GetMapping("/user-sales")
     public ResponseEntity<?> getUserSalesReport(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
-        List<Order> dailyOrders = orderRepository.findByOrderDate(date);
+        LocalDate finalStartDate;
+        LocalDate finalEndDate;
 
-        Map<User, List<Order>> ordersBySeller = dailyOrders.stream()
-                .collect(Collectors.groupingBy(Order::getSeller));
+        if (startDate != null && endDate != null) {
+            finalStartDate = startDate;
+            finalEndDate = endDate;
+        } else if (date != null) {
+            finalStartDate = date;
+            finalEndDate = date;
+        } else {
+            finalStartDate = LocalDate.now().minusMonths(1);
+            finalEndDate = LocalDate.now();
+        }
 
-        List<UserCommissionResponse> userSalesReports = ordersBySeller.entrySet().stream()
-                .map(entry -> {
-                    User seller = entry.getKey();
-                    List<Order> sellerOrders = entry.getValue();
+        System.out.println("Fetching user sales from " + finalStartDate + " to " + finalEndDate);
 
-                    double totalSales = sellerOrders.stream()
-                            .mapToDouble(order -> {
-                                Double discountToApply = order.getCustomDiscount() != null ? order.getCustomDiscount() : 
-                                        (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0);
-                                
-                                Double subtotal = order.getOrderItems().stream()
-                                        .mapToDouble(OrderItem::getSubtotal)
-                                        .sum();
-                                
-                                if (discountToApply > 0) {
-                                    return subtotal * (1 - discountToApply / 100.0);
-                                }
-                                return subtotal;
-                            })
-                            .sum();
+        List<Order> dailyOrders = orderRepository.findByOrderDateBetween(finalStartDate, finalEndDate);
+        System.out.println("Found " + dailyOrders.size() + " orders in range.");
 
-                    double commission = totalSales * (seller.getCommissionPercentage() / 100.0);
+        Map<User, Map<LocalDate, List<Order>>> ordersBySellerAndDate = dailyOrders.stream()
+                .collect(Collectors.groupingBy(Order::getSeller,
+                        Collectors.groupingBy(Order::getOrderDate)));
+        
+        System.out.println("Grouped by " + ordersBySellerAndDate.size() + " sellers.");
 
-                    List<OrderResponse> orderResponses = sellerOrders.stream()
-                            .map(order -> {
-                                OrderResponse response = new OrderResponse();
-                                response.setId(order.getId());
-                                response.setClient(new ClientResponse(
-                                    order.getClient().getId(),
-                                    order.getClient().getName(),
-                                    order.getClient().getAddress(),
-                                    order.getClient().getPhone(),
-                                    order.getClient().getDni(),
-                                    order.getClient().getEmail(),
-                                    order.getClient().getCurrentAccount(),
-                                    order.getClient().getDiscount(),
-                                    order.getClient().getLocation()
-                                ));
-                                response.setSeller(new UserResponse(
-                                    seller.getId(),
-                                    seller.getUsername(),
-                                    seller.getEmail(),
-                                    seller.getRole().name(),
-                                    seller.getCommissionPercentage()
-                                ));
-                                response.setOrderItems(order.getOrderItems().stream()
-                                    .<OrderItemResponse>map(item -> new OrderItemResponse(
-                                        item.getId(),
-                                        item.getProduct().getId(),
-                                        item.getProduct().getName(),
-                                        item.getProduct().getCode(),
-                                        item.getQuantity(),
-                                        item.getPrice(),
-                                        item.getSubtotal() * (1 - ((order.getCustomDiscount() != null ? order.getCustomDiscount() : 
-                                                (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0)) / 100.0)),
-                                        new ProductResponse(
-                                            item.getProduct().getId(),
-                                            item.getProduct().getName(),
-                                            item.getProduct().getFormaldehydePercentage(),
-                                            item.getProduct().getPrice(),
-                                            item.getProduct().getCost(),
-                                            item.getProduct().getType(),
-                                            item.getProduct().getCode(),
-                                            item.getProduct().getSize(),
-                                            item.getProduct().getCurrentStock(),
-                                            item.getProduct().getMinimumStock()
-                                        )
-                                    ))
-                                    .collect(Collectors.toList()));
-                                response.setOrderDate(order.getOrderDate());
-                                response.setDeliveryDate(order.getDeliveryDate());
-                                response.setDelivered(order.getDelivered());
-                                response.setPaid(order.getPaid());
-                                response.setAmountDue(order.getAmountDue());
-                                response.setShippingMethod(order.getShippingMethod());
-                                response.setPaymentMethod(order.getPaymentMethod());
-                                response.setShippingCost(order.getShippingCost());
-                                return response;
-                            })
-                            .collect(Collectors.toList());
+        List<UserCommissionResponse> userSalesReports = new ArrayList<>();
 
-                    return new UserCommissionResponse(
-                            new UserResponse(
+        ordersBySellerAndDate.forEach((seller, dateMap) -> {
+            dateMap.forEach((orderDate, sellerOrders) -> {
+                
+                double totalSales = sellerOrders.stream()
+                        .mapToDouble(order -> {
+                            Double discountToApply = order.getCustomDiscount() != null ? order.getCustomDiscount() : 
+                                    (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0);
+                            
+                            Double subtotal = order.getOrderItems().stream()
+                                    .mapToDouble(OrderItem::getSubtotal)
+                                    .sum();
+                            
+                            if (discountToApply > 0) {
+                                return subtotal * (1 - discountToApply / 100.0);
+                            }
+                            return subtotal;
+                        })
+                        .sum();
+
+                double commission = totalSales * (seller.getCommissionPercentage() / 100.0);
+
+                List<OrderResponse> orderResponses = sellerOrders.stream()
+                        .map(order -> {
+                            OrderResponse response = new OrderResponse();
+                            response.setId(order.getId());
+                            response.setClient(new ClientResponse(
+                                order.getClient().getId(),
+                                order.getClient().getName(),
+                                order.getClient().getAddress(),
+                                order.getClient().getPhone(),
+                                order.getClient().getDni(),
+                                order.getClient().getEmail(),
+                                order.getClient().getCurrentAccount(),
+                                order.getClient().getDiscount(),
+                                order.getClient().getLocation()
+                            ));
+                            response.setSeller(new UserResponse(
                                 seller.getId(),
                                 seller.getUsername(),
                                 seller.getEmail(),
                                 seller.getRole().name(),
                                 seller.getCommissionPercentage()
-                            ),
-                            orderResponses,
-                            totalSales,
-                            commission
-                    );
-                })
-                .collect(Collectors.toList());
+                            ));
+                            response.setOrderItems(order.getOrderItems().stream()
+                                .<OrderItemResponse>map(item -> new OrderItemResponse(
+                                    item.getId(),
+                                    item.getProduct().getId(),
+                                    item.getProduct().getName(),
+                                    item.getProduct().getCode(),
+                                    item.getQuantity(),
+                                    item.getPrice(),
+                                    item.getSubtotal() * (1 - ((order.getCustomDiscount() != null ? order.getCustomDiscount() : 
+                                            (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0)) / 100.0)),
+                                    new ProductResponse(
+                                        item.getProduct().getId(),
+                                        item.getProduct().getName(),
+                                        item.getProduct().getFormaldehydePercentage(),
+                                        item.getProduct().getPrice(),
+                                        item.getProduct().getCost(),
+                                        item.getProduct().getType(),
+                                        item.getProduct().getCode(),
+                                        item.getProduct().getSize(),
+                                        item.getProduct().getCurrentStock(),
+                                        item.getProduct().getMinimumStock()
+                                    )
+                                ))
+                                .collect(Collectors.toList()));
+                            response.setOrderDate(order.getOrderDate());
+                            response.setDeliveryDate(order.getDeliveryDate());
+                            response.setDelivered(order.getDelivered());
+                            response.setPaid(order.getPaid());
+                            response.setAmountDue(order.getAmountDue());
+                            response.setShippingMethod(order.getShippingMethod());
+                            response.setPaymentMethod(order.getPaymentMethod());
+                            response.setShippingCost(order.getShippingCost());
+                            
+                            // Calculate total
+                            Double discountToApplyOrder = order.getCustomDiscount() != null ? order.getCustomDiscount() : 
+                                    (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0);
+                            
+                            Double subtotalOrder = order.getOrderItems().stream()
+                                    .mapToDouble(OrderItem::getSubtotal)
+                                    .sum();
+                            
+                            Double totalWithDiscountOrder = subtotalOrder;
+                            if (discountToApplyOrder > 0) {
+                                totalWithDiscountOrder = subtotalOrder * (1 - discountToApplyOrder / 100.0);
+                            }
+                            
+                            response.setTotal(totalWithDiscountOrder + order.getShippingCost());
+                            
+                            return response;
+                        })
+                        .collect(Collectors.toList());
+
+                userSalesReports.add(new UserCommissionResponse(
+                        new UserResponse(
+                            seller.getId(),
+                            seller.getUsername(),
+                            seller.getEmail(),
+                            seller.getRole().name(),
+                            seller.getCommissionPercentage()
+                        ),
+                        orderResponses,
+                        totalSales,
+                        commission,
+                        orderDate
+                ));
+            });
+        });
+        
+        // Sort by date descending
+        userSalesReports.sort((r1, r2) -> r2.getDate().compareTo(r1.getDate()));
 
         return ResponseEntity.ok(userSalesReports);
     }

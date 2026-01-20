@@ -17,6 +17,7 @@ import { AddCustomerDialogComponent } from './add-client-dialog/add-client-dialo
 import { environment } from 'src/environments/environment';
 import { ClientService } from 'src/app/services/client.service';
 import { EditClientDialogComponent } from './edit-client-dialog/edit-client-dialog.component';
+import { ClientHistoryDialogComponent } from './client-history-dialog/client-history-dialog.component';
 
 @Component({
   selector: 'app-customer-management',
@@ -149,6 +150,13 @@ export class CustomerManagementComponent implements OnInit {
           }
         });
       }
+    });
+  }
+
+  openHistoryDialog(client: any): void {
+    this.dialog.open(ClientHistoryDialogComponent, {
+      width: '800px',
+      data: { clientId: client.id, clientName: client.name }
     });
   }
 }

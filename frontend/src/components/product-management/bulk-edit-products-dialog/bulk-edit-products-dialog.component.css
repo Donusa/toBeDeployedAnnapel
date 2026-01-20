@@ -1,0 +1,38 @@
+.dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 8px;
+  min-width: 560px;
+  max-height: 75vh;
+  overflow: auto;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.row.single .full {
+  width: 100%;
+}
+
+.mode {
+  width: 220px;
+}
+
+.value {
+  width: 200px;
+}
+
+.disabled {
+  opacity: 0.7;
+}
+

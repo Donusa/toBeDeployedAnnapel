@@ -20,7 +20,16 @@
 
     <mat-card class="summary-card">
       <mat-card-header>
-        <mat-card-title>Total Comisiones</mat-card-title>
+        <mat-card-title>Total Comisiones del Día</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <h3>{{totalDailyCommissions | currency}}</h3>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Total Comisiones (Periodo)</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <h3>{{totalCommissions | currency}}</h3>
@@ -28,10 +37,16 @@
     </mat-card>
   </div>
 
-  <div *ngIf="isAdmin" class="commission-table">
-    <h3>Comisiones por Usuario</h3>
+  <div class="commission-table">
+    <h3>Comisiones por Usuario (Últimos 30 días)</h3>
+    
     <p class="table-hint">Haga clic en una fila para ver los detalles de ventas</p>
     <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+      <ng-container matColumnDef="date">
+        <mat-header-cell *matHeaderCellDef> Fecha </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{element.date | date:'dd/MM/yyyy'}} </mat-cell>
+      </ng-container>
+
       <ng-container matColumnDef="user">
         <mat-header-cell *matHeaderCellDef> Usuario </mat-header-cell>
         <mat-cell *matCellDef="let element"> {{element.user}} </mat-cell>
@@ -56,7 +71,7 @@
     <div class="summary-cards">
       <mat-card class="summary-card">
         <mat-card-header>
-          <mat-card-title>Tus Ventas del Día</mat-card-title>
+          <mat-card-title>Tus Ventas del Periodo</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <h3>{{userSales | currency}}</h3>
@@ -65,7 +80,7 @@
 
       <mat-card class="summary-card">
         <mat-card-header>
-          <mat-card-title>Tu Comisión del Día</mat-card-title>
+          <mat-card-title>Tu Comisión del Periodo</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <h3>{{userCommission | currency}}</h3>

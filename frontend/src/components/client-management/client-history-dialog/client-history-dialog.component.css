@@ -1,0 +1,23 @@
+table {
+  width: 100%;
+}
+
+.text-danger {
+  color: red;
+  font-weight: bold;
+}
+
+.status-paid {
+  color: green;
+  font-weight: bold;
+}
+
+.status-pending {
+  color: orange;
+  font-weight: bold;
+}
+
+mat-dialog-content {
+  max-height: 70vh;
+  min-width: 600px;
+}

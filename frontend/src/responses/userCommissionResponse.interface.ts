@@ -6,4 +6,5 @@ export interface UserCommissionResponse {
     orders: OrderResponse[];
     totalSales: number;
     totalCommission: number;
+    date: string;
 }

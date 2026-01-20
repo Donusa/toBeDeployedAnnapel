@@ -33,12 +33,24 @@ export class ReportService {
     /**
      * Obtiene el reporte de comisiones por usuario
      * @param date Fecha para la cual se quiere obtener el reporte
+     * @param startDate Fecha inicio del rango (opcional)
+     * @param endDate Fecha fin del rango (opcional)
      * @returns Observable con la información de comisiones por usuario
      */
-    getUserSalesReport(date: Date = new Date()): Observable<UserCommissionResponse[]> {
-        const formattedDate = date.toISOString().split('T')[0];
+    getUserSalesReport(date?: Date, startDate?: Date, endDate?: Date): Observable<UserCommissionResponse[]> {
+        let params: any = {};
+
+        if (startDate && endDate) {
+            params.startDate = startDate.toISOString().split('T')[0];
+            params.endDate = endDate.toISOString().split('T')[0];
+        } else if (date) {
+            params.date = date.toISOString().split('T')[0];
+        } 
+        // else: do not set params, let backend handle default range
+
+
         return this.http.get<UserCommissionResponse[]>(`${this.apiUrl}/api/reports/user-sales`, {
-            params: { date: formattedDate }
+            params: params
         });
     }
 

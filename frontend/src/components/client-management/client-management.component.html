@@ -61,6 +61,9 @@
     <ng-container matColumnDef="actions">
       <mat-header-cell *matHeaderCellDef> Acciones </mat-header-cell>
       <mat-cell *matCellDef="let element">
+        <button mat-icon-button color="accent" (click)="openHistoryDialog(element)" title="Ver Historial">
+          <mat-icon>history</mat-icon>
+        </button>
         <button mat-icon-button color="primary" (click)="openEditDialog(element)">
           <mat-icon>edit</mat-icon>
         </button>

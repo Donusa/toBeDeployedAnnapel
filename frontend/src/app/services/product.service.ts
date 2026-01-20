@@ -22,7 +22,7 @@ export class ProductService {
     return this.http.get<Product[]>(this.apiUrl);
   }
 
-  updateProduct(id: number, product: Product): Observable<Product> {
+  updateProduct(id: number, product: ProductRequest): Observable<Product> {
     return this.http.put<Product>(`${this.apiUrl}/${id}`, product);
   }
 

@@ -1,0 +1,82 @@
+<h2 mat-dialog-title>Edición masiva ({{data.selectedCount}} productos)</h2>
+
+<mat-dialog-content class="dialog-content">
+  <form [formGroup]="form">
+    <div class="section">
+      <mat-checkbox formControlName="applyPrice">Editar precio</mat-checkbox>
+      <div class="row" [class.disabled]="!form.get('applyPrice')?.value">
+        <mat-form-field appearance="outline" class="mode">
+          <mat-label>Modo</mat-label>
+          <mat-select formControlName="priceMode">
+            <mat-option *ngFor="let mode of numberModes" [value]="mode.value">{{mode.label}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="value">
+          <mat-label>Valor</mat-label>
+          <input matInput type="number" formControlName="priceValue">
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="section">
+      <mat-checkbox formControlName="applyCost">Editar costo</mat-checkbox>
+      <div class="row" [class.disabled]="!form.get('applyCost')?.value">
+        <mat-form-field appearance="outline" class="mode">
+          <mat-label>Modo</mat-label>
+          <mat-select formControlName="costMode">
+            <mat-option *ngFor="let mode of numberModes" [value]="mode.value">{{mode.label}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="value">
+          <mat-label>Valor</mat-label>
+          <input matInput type="number" formControlName="costValue">
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="section">
+      <mat-checkbox formControlName="applyType">Editar tipo</mat-checkbox>
+      <div class="row single" [class.disabled]="!form.get('applyType')?.value">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Tipo</mat-label>
+          <input matInput formControlName="type">
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="section">
+      <mat-checkbox formControlName="applySize">Editar tamaño</mat-checkbox>
+      <div class="row single" [class.disabled]="!form.get('applySize')?.value">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Tamaño</mat-label>
+          <input matInput formControlName="size">
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="section">
+      <mat-checkbox formControlName="applyFormaldehydePercentage">Editar formol %</mat-checkbox>
+      <div class="row single" [class.disabled]="!form.get('applyFormaldehydePercentage')?.value">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Formol %</mat-label>
+          <input matInput type="number" formControlName="formaldehydePercentage">
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="section">
+      <mat-checkbox formControlName="applyMinimumStock">Editar stock mínimo</mat-checkbox>
+      <div class="row single" [class.disabled]="!form.get('applyMinimumStock')?.value">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Stock mínimo</mat-label>
+          <input matInput type="number" formControlName="minimumStock">
+        </mat-form-field>
+      </div>
+    </div>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">Cancelar</button>
+  <button mat-raised-button style="background-color: #333333; color: white;" (click)="onSubmit()">Aplicar</button>
+</mat-dialog-actions>

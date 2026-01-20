@@ -40,9 +40,10 @@ import { ProductRankingResponse } from 'src/responses/productRankingResponse.int
   ]
 })
 export class CashRegisterComponent implements OnInit {
-  displayedColumns: string[] = ['user', 'sales', 'commission'];
+  displayedColumns: string[] = ['date', 'user', 'sales', 'commission'];
   dataSource = new MatTableDataSource<any>();
   totalDailySales: number = 0;
+  totalDailyCommissions: number = 0;
   totalCommissions: number = 0;
   isAdmin: boolean = false;
   userCommission: number = 0;
@@ -55,6 +56,10 @@ export class CashRegisterComponent implements OnInit {
   productRankingDataSource = new MatTableDataSource<ProductRankingResponse>();
   startDate: Date = new Date();
   endDate: Date = new Date();
+
+  // Commission history properties
+  // commissionStartDate and commissionEndDate removed as we default to last 30 days
+
 
   constructor(
     private reportService: ReportService,
@@ -75,7 +80,8 @@ export class CashRegisterComponent implements OnInit {
     this.reportService.getDailyCashRegister(this.selectedDate).subscribe({
       next: (response: DailyCashRegisterResponse) => {
         this.totalDailySales = response.totalIncome;
-        this.totalCommissions = response.commissionAmount;
+        this.totalDailyCommissions = response.commissionAmount;
+        // this.totalCommissions will be calculated in loadUserSalesData for the period
         this.loadUserSalesData();
       },
       error: (error) => {
@@ -85,10 +91,13 @@ export class CashRegisterComponent implements OnInit {
   }
 
   loadUserSalesData(): void {
-    this.reportService.getUserSalesReport(this.selectedDate).subscribe({
+    // Calling without arguments triggers backend default (last month)
+    this.reportService.getUserSalesReport().subscribe({
       next: (response) => {
         this.userSalesData = response;
-        this.dataSource.data = response.map(userSales => ({
+        
+        let tableData = response.map(userSales => ({
+          date: userSales.date,
           user: userSales.user.username,
           sales: userSales.totalSales,
           commission: userSales.totalCommission,
@@ -101,13 +110,17 @@ export class CashRegisterComponent implements OnInit {
 
         if (!this.isAdmin) {
           const currentUser = this.authService.getCurrentUser();
-          const userSalesData = response.find(sale => sale.user.id === currentUser?.id);
-          this.userCommission = userSalesData?.totalCommission || 0;
-          this.userSales = userSalesData?.totalSales || 0;
+          tableData = tableData.filter(d => d.details.user.id === currentUser?.id);
+          
+          const mySales = response.filter(sale => sale.user.id === currentUser?.id);
+          this.userCommission = mySales.reduce((acc, curr) => acc + (curr.totalCommission || 0), 0);
+          this.userSales = mySales.reduce((acc, curr) => acc + (curr.totalSales || 0), 0);
         }
+        
+        this.dataSource.data = tableData;
       },
       error: (error) => {
-        this.handleError(error, 'Error al cargar los datos de comisiones por usuario');
+        this.handleError(error, 'Error al cargar el reporte de ventas por usuario');
       }
     });
   }
