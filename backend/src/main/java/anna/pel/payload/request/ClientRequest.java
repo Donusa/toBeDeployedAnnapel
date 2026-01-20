@@ -1,9 +1,11 @@
 package anna.pel.payload.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ClientRequest {
     @NotBlank
     private String name;
