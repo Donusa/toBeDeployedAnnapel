@@ -153,14 +153,14 @@ export class EditOrderDialogComponent implements OnInit {
       this.orderForm.get('paid')?.valueChanges.subscribe(value => {
         if (value === true) {
           this.isPaidDisabled = true;
-          this.orderForm.get('paid')?.disable();
+          this.orderForm.get('paid')?.disable({ emitEvent: false });
         }
       });
       
       this.orderForm.get('delivered')?.valueChanges.subscribe(value => {
         if (value === true) {
           this.isDeliveredDisabled = true;
-          this.orderForm.get('delivered')?.disable();
+          this.orderForm.get('delivered')?.disable({ emitEvent: false });
         }
       });
     });
