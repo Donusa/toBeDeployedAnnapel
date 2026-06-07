@@ -40,9 +40,11 @@ import { ProductRankingResponse } from 'src/responses/productRankingResponse.int
   ]
 })
 export class CashRegisterComponent implements OnInit {
-  displayedColumns: string[] = ['date', 'user', 'sales', 'commission'];
+  displayedColumns: string[] = ['date', 'user', 'gross', 'net', 'commission'];
   dataSource = new MatTableDataSource<any>();
-  totalDailySales: number = 0;
+  totalDailyGrossSales: number = 0;
+  totalDailyDiscounts: number = 0;
+  totalDailyNetSales: number = 0;
   totalDailyCommissions: number = 0;
   totalCommissions: number = 0;
   isAdmin: boolean = false;
@@ -79,7 +81,9 @@ export class CashRegisterComponent implements OnInit {
   loadCashRegisterData(): void {
     this.reportService.getDailyCashRegister(this.selectedDate).subscribe({
       next: (response: DailyCashRegisterResponse) => {
-        this.totalDailySales = response.totalIncome;
+        this.totalDailyGrossSales = response.grossIncome;
+        this.totalDailyDiscounts = response.discountAmount;
+        this.totalDailyNetSales = response.netIncome;
         this.totalDailyCommissions = response.commissionAmount;
         // this.totalCommissions will be calculated in loadUserSalesData for the period
         this.loadUserSalesData();
@@ -96,13 +100,22 @@ export class CashRegisterComponent implements OnInit {
       next: (response) => {
         this.userSalesData = response;
         
-        let tableData = response.map(userSales => ({
-          date: userSales.date,
-          user: userSales.user.username,
-          sales: userSales.totalSales,
-          commission: userSales.totalCommission,
-          details: userSales
-        }));
+        let tableData = response.map(userSales => {
+          // calcular bruto como suma de price * quantity sobre todos los orderItems
+          const gross = (userSales.orders || []).reduce((accOrder, order) => {
+            const orderGross = (order.orderItems || []).reduce((accItem, item) => accItem + ((item.price || 0) * (item.quantity || 0)), 0);
+            return accOrder + orderGross;
+          }, 0);
+
+          return {
+            date: userSales.date,
+            user: userSales.user.username,
+            sales: userSales.totalSales,
+            gross: gross,
+            commission: userSales.totalCommission,
+            details: userSales
+          };
+        });
 
         this.totalCommissions = response.reduce((total, userSales) => {
           return total + (userSales.totalCommission || 0);

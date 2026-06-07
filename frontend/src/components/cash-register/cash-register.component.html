@@ -11,10 +11,28 @@
   <div *ngIf="isAdmin" class="summary-cards">
     <mat-card class="summary-card">
       <mat-card-header>
-        <mat-card-title>Total Ventas del Día</mat-card-title>
+        <mat-card-title>Total Ventas Brutas del Día</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <h3>{{totalDailySales | currency}}</h3>
+        <h3>{{totalDailyGrossSales | currency}}</h3>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Total Descuentos del Día</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <h3>{{totalDailyDiscounts | currency}}</h3>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Total Ventas Netas del Día</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <h3>{{totalDailyNetSales | currency}}</h3>
       </mat-card-content>
     </mat-card>
 
@@ -37,6 +55,8 @@
     </mat-card>
   </div>
 
+  <!-- (Revertido) tarjetas públicas removidas -->
+
   <div class="commission-table">
     <h3>Comisiones por Usuario (Últimos 30 días)</h3>
     
@@ -52,8 +72,13 @@
         <mat-cell *matCellDef="let element"> {{element.user}} </mat-cell>
       </ng-container>
 
-      <ng-container matColumnDef="sales">
-        <mat-header-cell *matHeaderCellDef> Ventas </mat-header-cell>
+      <ng-container matColumnDef="gross">
+        <mat-header-cell *matHeaderCellDef> Bruto </mat-header-cell>
+        <mat-cell *matCellDef="let element"> {{element.gross | currency}} </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="net">
+        <mat-header-cell *matHeaderCellDef> Neto </mat-header-cell>
         <mat-cell *matCellDef="let element"> {{element.sales | currency}} </mat-cell>
       </ng-container>
 

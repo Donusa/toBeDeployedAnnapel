@@ -21,6 +21,9 @@ public class DailyCashRegisterResponse {
     private Double cardIncome;
     private Double transferIncome;
     private Double totalIncome;
+    private Double grossIncome;
+    private Double discountAmount;
+    private Double netIncome;
     
     // Commission information
     private Double commissionPercentage;

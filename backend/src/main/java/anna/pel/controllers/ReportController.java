@@ -173,6 +173,14 @@ public class ReportController {
         double transferIncome = calculateIncomeByPaymentMethod(dailyOrders, PaymentMethod.TRANSFER);
         double totalIncome = cashIncome + cardIncome + transferIncome;
 
+        double grossIncome = dailyOrders.stream()
+                .flatMap(order -> order.getOrderItems().stream())
+                .mapToDouble(OrderItem::getSubtotal)
+                .sum();
+
+        double discountAmount = grossIncome - totalIncome;
+        double netIncome = totalIncome;
+
         double shippingPayments = dailyOrders.stream()
                 .mapToDouble(Order::getShippingCost)
                 .sum();
@@ -203,7 +211,9 @@ public class ReportController {
         response.setCardIncome(cardIncome);
         response.setTransferIncome(transferIncome);
         response.setTotalIncome(totalIncome);
-        // We can set commissionPercentage to 0 or average, or remove it, but for now let's leave it as 0 or ignore it since it varies per user.
+        response.setGrossIncome(grossIncome);
+        response.setDiscountAmount(discountAmount);
+        response.setNetIncome(netIncome);
         response.setCommissionPercentage(0.0); 
         response.setCommissionAmount(commissionAmount);
         response.setShippingPayments(shippingPayments);
