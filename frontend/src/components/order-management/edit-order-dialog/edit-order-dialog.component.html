@@ -4,6 +4,21 @@
   <form [formGroup]="orderForm" (ngSubmit)="onSubmit()">
     <div class="form-row">
       <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Fecha de Pedido</mat-label>
+        <input matInput [matDatepicker]="orderDatePicker" formControlName="orderDate" required>
+        <mat-datepicker-toggle matSuffix [for]="orderDatePicker"></mat-datepicker-toggle>
+        <mat-datepicker #orderDatePicker></mat-datepicker>
+        <mat-error *ngIf="orderForm.get('orderDate')?.hasError('matDatepickerParse')">
+          Ingresá una fecha válida
+        </mat-error>
+        <mat-error *ngIf="orderForm.get('orderDate')?.hasError('required') && !orderForm.get('orderDate')?.hasError('matDatepickerParse')">
+          La fecha del pedido es requerida
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="full-width">
         <mat-label>Cliente</mat-label>
         <input type="text"
                matInput

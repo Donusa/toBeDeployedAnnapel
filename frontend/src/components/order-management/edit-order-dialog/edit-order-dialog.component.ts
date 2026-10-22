@@ -69,6 +69,7 @@ export class EditOrderDialogComponent implements OnInit {
     this.orderForm = this.fb.group({
       clientId: [data.client?.id || data.clientId, Validators.required],
       products: this.fb.array([]),
+      orderDate: [data.orderDate ? new Date(`${data.orderDate}T00:00:00`) : new Date(), Validators.required],
       deliveryDate: [deliveryDate, [Validators.required, this.dateValidator()]],
       shippingMethod: [data.shippingMethod || '', Validators.required],
       paid: [data.paid || false],

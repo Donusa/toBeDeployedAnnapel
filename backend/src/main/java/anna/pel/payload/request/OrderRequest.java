@@ -19,6 +19,8 @@ public class OrderRequest {
     @NotEmpty(message = "Debe incluir al menos un producto en el pedido")
     private List<OrderItemRequest> orderItems;
     
+    private LocalDate orderDate;
+
     private LocalDate deliveryDate;
     
     private Boolean delivered = false;

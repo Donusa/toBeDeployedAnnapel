@@ -3,6 +3,7 @@ export interface OrderRequest {
 clientId: number;
 sellerId: number;
 orderItems: OrderItemRequest[];
+orderDate?: string; // formato "YYYY-MM-DD"
 deliveryDate: string; // formato "YYYY-MM-DD"
 delivered: boolean;
 paid: boolean;

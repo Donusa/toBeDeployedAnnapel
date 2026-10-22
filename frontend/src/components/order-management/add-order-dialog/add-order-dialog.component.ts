@@ -65,6 +65,7 @@ export class AddOrderDialogComponent implements OnInit {
     this.orderForm = this.fb.group({
       clientId: ['', Validators.required],
       products: this.fb.array([]),
+      orderDate: [new Date(), Validators.required],
       deliveryDate: ['', Validators.required],
       shippingMethod: ['', Validators.required],
       delivered: [false],

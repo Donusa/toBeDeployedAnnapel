@@ -117,6 +117,9 @@ public class OrderController {
         Order order = new Order();
         order.setClient(client);
         order.setSeller(seller);
+        if (orderRequest.getOrderDate() != null) {
+            order.setOrderDate(orderRequest.getOrderDate());
+        }
 
         // Validate and add order items
         if (orderRequest.getOrderItems() != null && !orderRequest.getOrderItems().isEmpty()) {
@@ -250,6 +253,9 @@ public class OrderController {
                     // Update client and seller
                     order.setClient(client);
                     order.setSeller(seller);
+                    if (orderRequest.getOrderDate() != null) {
+                        order.setOrderDate(orderRequest.getOrderDate());
+                    }
                     
                     // Restaurar el stock de los productos en la orden actual antes de actualizarla
                     for (OrderItem existingItem : order.getOrderItems()) {

@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableDataSource } from '@angular/material/table';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule, DatePipe, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
 import { MatSelectModule } from '@angular/material/select';
@@ -115,12 +115,9 @@ export class OrderManagementComponent implements OnInit {
         filterValue = 'true';
         break;
       case 'orderDate':
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const today = formatDate(new Date(), 'yyyy-MM-dd', 'en-US');
         this.dataSource.filterPredicate = (data: any, filter: string) => {
-          const orderDate = new Date(data.orderDate);
-          orderDate.setHours(0, 0, 0, 0);
-          return orderDate.getTime() === today.getTime();
+          return data.orderDate === today;
         };
         filterValue = 'true';
         break;
@@ -193,6 +190,8 @@ export class OrderManagementComponent implements OnInit {
       if (result) {
         const orderData = result.orderData || result;
         const downloadTicketCallback = result.downloadTicket;
+
+        orderData.orderDate = formatDate(orderData.orderDate, 'yyyy-MM-dd', 'en-US');
         
         if (orderData.deliveryDate) {
           orderData.deliveryDate = orderData.deliveryDate.toISOString().split('T')[0];
@@ -239,6 +238,7 @@ export class OrderManagementComponent implements OnInit {
 
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
+        result.orderDate = formatDate(result.orderDate, 'yyyy-MM-dd', 'en-US');
         if (result.deliveryDate) {
           result.deliveryDate = result.deliveryDate.toISOString().split('T')[0];
         }
