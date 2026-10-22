@@ -44,7 +44,6 @@ export class EditOrderDialogComponent implements OnInit {
   clients: any[] = [];
   products: any[] = [];
   shippingMethods: string[] = ['RETIRA_SIN_COSTO', 'ENVIO_DOMICILIO', 'ENVIO_CORREO'];
-  minDate: Date | null = null;
   
   clientSearchControl = new FormControl();
   productSearchControls: FormControl[] = [];
@@ -64,13 +63,13 @@ export class EditOrderDialogComponent implements OnInit {
     private productService: ProductService
   ) {
    
-    const deliveryDate = data.deliveryDate ? this.fixTimezoneIssue(new Date(data.deliveryDate)) : null;
+    const deliveryDate = data.deliveryDate ? new Date(`${data.deliveryDate}T00:00:00`) : null;
     
     this.orderForm = this.fb.group({
       clientId: [data.client?.id || data.clientId, Validators.required],
       products: this.fb.array([]),
       orderDate: [data.orderDate ? new Date(`${data.orderDate}T00:00:00`) : new Date(), Validators.required],
-      deliveryDate: [deliveryDate, [Validators.required, this.dateValidator()]],
+      deliveryDate: [deliveryDate, Validators.required],
       shippingMethod: [data.shippingMethod || '', Validators.required],
       paid: [data.paid || false],
       delivered: [data.delivered || false],
@@ -133,7 +132,7 @@ export class EditOrderDialogComponent implements OnInit {
 
     setTimeout(() => {
       const values = {
-        deliveryDate: this.data.deliveryDate ? this.fixTimezoneIssue(new Date(this.data.deliveryDate)) : null,
+        deliveryDate: this.data.deliveryDate ? new Date(`${this.data.deliveryDate}T00:00:00`) : null,
         shippingMethod: this.data.shippingMethod || null,
         shippingCost: this.data.shippingCost || 0,
         amountDue: this.data.amountDue || 0,
@@ -298,29 +297,6 @@ export class EditOrderDialogComponent implements OnInit {
     return availableProducts.length > 0;
   }
 
-  private dateValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const initialValue = this.data.deliveryDate;
-      const currentValue = control.value;
-  
-      if (this.data.id && initialValue) {
-        const initialDate = new Date(initialValue).getTime();
-        const currentDate = currentValue ? new Date(currentValue).getTime() : null;
-        
-        if (initialDate === currentDate) {
-          return null;
-        }
-      }
-      
-
-      if (currentValue && control.dirty && new Date(currentValue) < new Date()) {
-        return { pastDate: true };
-      }
-      
-      return null;
-    };
-  }
-
   onSubmit(): void {
     if (this.orderForm.valid) {
       // Incluir valores de campos deshabilitados usando getRawValue()
@@ -376,11 +352,6 @@ export class EditOrderDialogComponent implements OnInit {
 
   onCancel(): void {
     this.dialogRef.close();
-  }
-
-  private fixTimezoneIssue(date: Date): Date {
-      const offset = date.getTimezoneOffset() * 60000;
-      return new Date(date.getTime() + offset);
   }
 
   duplicateProductValidator(): ValidatorFn {

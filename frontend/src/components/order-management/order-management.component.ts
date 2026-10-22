@@ -194,7 +194,7 @@ export class OrderManagementComponent implements OnInit {
         orderData.orderDate = formatDate(orderData.orderDate, 'yyyy-MM-dd', 'en-US');
         
         if (orderData.deliveryDate) {
-          orderData.deliveryDate = orderData.deliveryDate.toISOString().split('T')[0];
+          orderData.deliveryDate = formatDate(orderData.deliveryDate, 'yyyy-MM-dd', 'en-US');
         }
         
         const orderRequest = {
@@ -240,7 +240,7 @@ export class OrderManagementComponent implements OnInit {
       if (result) {
         result.orderDate = formatDate(result.orderDate, 'yyyy-MM-dd', 'en-US');
         if (result.deliveryDate) {
-          result.deliveryDate = result.deliveryDate.toISOString().split('T')[0];
+          result.deliveryDate = formatDate(result.deliveryDate, 'yyyy-MM-dd', 'en-US');
         }
 
         const orderRequest = {

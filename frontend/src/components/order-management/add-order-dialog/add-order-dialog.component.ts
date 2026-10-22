@@ -45,7 +45,6 @@ export class AddOrderDialogComponent implements OnInit {
   clients: any[] = [];
   products: any[] = [];
   shippingMethods: string[] = ['RETIRA_SIN_COSTO', 'ENVIO_DOMICILIO', 'ENVIO_CORREO'];
-  minDate: Date = new Date();
   selectedClient: any = null;
   useCustomDiscount: boolean = false;
   
