@@ -38,7 +38,7 @@
     
     <ng-container matColumnDef="deliveryDate">
       <th mat-header-cell *matHeaderCellDef mat-sort-header> Fecha de Entrega </th>
-      <td mat-cell *matCellDef="let element"> {{element.deliveryDate | date:'dd/MM/yyyy'}} </td>
+      <td mat-cell *matCellDef="let element"> {{(element.deliveryDate | date:'dd/MM/yyyy') || 'Sin fecha'}} </td>
     </ng-container>
 
     <ng-container matColumnDef="orderDate">

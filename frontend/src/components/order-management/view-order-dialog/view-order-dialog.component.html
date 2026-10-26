@@ -10,7 +10,7 @@
 
     <h3>Información del Pedido</h3>
     <p><strong>Fecha de Pedido:</strong> {{data.orderDate | date:'dd/MM/yyyy'}}</p>
-    <p><strong>Fecha de Entrega:</strong> {{data.deliveryDate | date:'dd/MM/yyyy'}}</p>
+    <p><strong>Fecha de Entrega:</strong> {{(data.deliveryDate | date:'dd/MM/yyyy') || 'Sin fecha'}}</p>
     <p><strong>Estado de Entrega:</strong> {{data.delivered ? 'Entregado' : 'Pendiente'}}</p>
     <p><strong>Estado de Pago:</strong> {{data.paid ? 'Pagado' : 'Pendiente'}}</p>
     <p><strong>Método de Pago:</strong> {{

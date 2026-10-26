@@ -149,7 +149,16 @@ export class OrderManagementComponent implements OnInit {
           if (a.delivered !== b.delivered) {
             return a.delivered ? 1 : -1;
           }
-          return new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime();
+          if (!a.deliveryDate && !b.deliveryDate) {
+            return 0;
+          }
+          if (!a.deliveryDate) {
+            return 1;
+          }
+          if (!b.deliveryDate) {
+            return -1;
+          }
+          return a.deliveryDate.localeCompare(b.deliveryDate);
         });
         
         this.dataSource.data = orders;
@@ -193,9 +202,9 @@ export class OrderManagementComponent implements OnInit {
 
         orderData.orderDate = formatDate(orderData.orderDate, 'yyyy-MM-dd', 'en-US');
         
-        if (orderData.deliveryDate) {
-          orderData.deliveryDate = formatDate(orderData.deliveryDate, 'yyyy-MM-dd', 'en-US');
-        }
+        orderData.deliveryDate = orderData.deliveryDate
+          ? formatDate(orderData.deliveryDate, 'yyyy-MM-dd', 'en-US')
+          : null;
         
         const orderRequest = {
           ...orderData,
@@ -239,9 +248,9 @@ export class OrderManagementComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         result.orderDate = formatDate(result.orderDate, 'yyyy-MM-dd', 'en-US');
-        if (result.deliveryDate) {
-          result.deliveryDate = formatDate(result.deliveryDate, 'yyyy-MM-dd', 'en-US');
-        }
+        result.deliveryDate = result.deliveryDate
+          ? formatDate(result.deliveryDate, 'yyyy-MM-dd', 'en-US')
+          : null;
 
         const orderRequest = {
           ...result,

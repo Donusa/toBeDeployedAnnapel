@@ -65,7 +65,7 @@ export class AddOrderDialogComponent implements OnInit {
       clientId: ['', Validators.required],
       products: this.fb.array([]),
       orderDate: [new Date(), Validators.required],
-      deliveryDate: ['', Validators.required],
+      deliveryDate: [null],
       shippingMethod: ['', Validators.required],
       delivered: [false],
       paid: [false],

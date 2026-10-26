@@ -1,6 +1,8 @@
 package anna.pel.controllers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -72,17 +74,52 @@ class OrderDateTests {
     }
 
     private String requestBody(String orderDate) {
+        return requestBody(orderDate, "");
+    }
+
+    private String requestBody(String orderDate, String deliveryDateField) {
         String dateField = orderDate == null ? "" : ",\"orderDate\":\"" + orderDate + "\"";
         return """
                 {"clientId":1,"sellerId":2,"orderItems":[{"productId":3,"quantity":1}],
-                 "shippingMethod":"RETIRA_SIN_COSTO","paid":true%s}
-                """.formatted(dateField);
+                 "shippingMethod":"RETIRA_SIN_COSTO","paid":true%s%s}
+                """.formatted(dateField, deliveryDateField);
     }
 
     private void assertSavedDate(String expectedDate) {
         ArgumentCaptor<Order> savedOrder = ArgumentCaptor.forClass(Order.class);
         verify(orderRepository).save(savedOrder.capture());
         assertEquals(LocalDate.parse(expectedDate), savedOrder.getValue().getOrderDate());
+    }
+
+    private void assertSavedWithoutDeliveryDate() {
+        ArgumentCaptor<Order> savedOrder = ArgumentCaptor.forClass(Order.class);
+        verify(orderRepository).save(savedOrder.capture());
+        assertNull(savedOrder.getValue().getDeliveryDate());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void createsOrderWithoutDeliveryDate(boolean explicitNull) throws Exception {
+        prepareRepositories();
+        String body = requestBody("2026-10-20", explicitNull ? ",\"deliveryDate\":null" : "");
+        mvc.perform(post("/api/orders").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deliveryDate").value(nullValue()));
+        assertSavedWithoutDeliveryDate();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void clearsDeliveryDateWhenUpdateLeavesItEmpty(boolean explicitNull) throws Exception {
+        prepareRepositories();
+        Order order = new Order();
+        order.setDeliveryDate(LocalDate.of(2026, 11, 1));
+        when(orderRepository.findById(4L)).thenReturn(Optional.of(order));
+        String body = requestBody("2026-10-20", explicitNull ? ",\"deliveryDate\":null" : "");
+        mvc.perform(put("/api/orders/4").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deliveryDate").value(nullValue()));
+        assertSavedWithoutDeliveryDate();
     }
 
     @ParameterizedTest

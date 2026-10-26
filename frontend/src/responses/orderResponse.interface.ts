@@ -8,7 +8,7 @@ client: ClientResponse;
 seller: UserResponse;
 orderItems: OrderItemResponse[];
 orderDate: string;
-deliveryDate: string;
+deliveryDate: string | null;
 delivered: boolean;
 paid: boolean;
 amountDue: number;

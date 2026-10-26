@@ -70,10 +70,13 @@
     </div>
 
     <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Fecha de Entrega</mat-label>
+      <mat-label>Fecha de Entrega (opcional)</mat-label>
       <input matInput [matDatepicker]="picker" formControlName="deliveryDate">
       <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
       <mat-datepicker #picker></mat-datepicker>
+      <mat-error *ngIf="orderForm.get('deliveryDate')?.hasError('matDatepickerParse')">
+        Ingresá una fecha válida
+      </mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full-width">

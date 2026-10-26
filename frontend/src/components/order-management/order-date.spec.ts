@@ -39,10 +39,12 @@ describe('Order dates', () => {
       await TestBed.configureTestingModule({
         imports: [AddOrderDialogComponent, EditOrderDialogComponent, NoopAnimationsModule],
         providers: [
-          { provide: MatDialogRef, useValue: { close: () => {} } },
+          { provide: MatDialogRef, useValue: jasmine.createSpyObj('MatDialogRef', ['close']) },
           { provide: MAT_DIALOG_DATA, useValue: { orderDate: '2026-10-20', deliveryDate: '2026-11-01' } },
           { provide: ClientService, useValue: { getClients: () => of([]) } },
-          { provide: ProductService, useValue: { getAllProducts: () => of([]) } },
+          { provide: ProductService, useValue: { getAllProducts: () => of([
+            { id: 3, name: 'Producto', code: 'P', currentStock: 10 }
+          ]) } },
           { provide: OrderService, useValue: {} },
           { provide: PdfService, useValue: {} }
         ]
@@ -64,7 +66,33 @@ describe('Order dates', () => {
           expect(control.valid).toBeTrue();
         }
         control.setValue(null);
-        expect(control.hasError('required')).toBeTrue();
+        expect(control.valid).toBeTrue();
+      }));
+
+      it(`saves without a delivery date in ${dialogComponent.name}`, fakeAsync(() => {
+        const fixture = TestBed.createComponent<AddOrderDialogComponent | EditOrderDialogComponent>(dialogComponent);
+        fixture.detectChanges();
+        tick();
+        fixture.detectChanges();
+
+        const component = fixture.componentInstance;
+        component.orderForm.patchValue({
+          clientId: 1,
+          deliveryDate: null,
+          shippingMethod: 'RETIRA_SIN_COSTO',
+          paymentMethodId: 1
+        });
+        component.productForms.at(0).patchValue({ productId: 3, quantity: 1 });
+        fixture.detectChanges();
+
+        const input: HTMLInputElement = fixture.nativeElement.querySelector('input[formControlName="deliveryDate"]');
+        expect(input.required).toBeFalse();
+        expect(component.orderForm.valid).toBeTrue();
+        component.onSubmit();
+        const close = TestBed.inject(MatDialogRef).close as jasmine.Spy;
+        expect(close).toHaveBeenCalled();
+        const result = close.calls.mostRecent().args[0];
+        expect((result.orderData || result).deliveryDate).toBeNull();
       }));
     }
   });
@@ -119,6 +147,36 @@ describe('Order dates', () => {
         expect(orderService.updateOrder.calls.mostRecent().args[1].deliveryDate).toBe('2000-02-29');
       });
     }
+
+    it('sends null for a blank delivery date on create and update', () => {
+      for (const deliveryDate of [null, '']) {
+        const formValue = () => ({
+          orderDate: new Date(2026, 9, 20),
+          deliveryDate,
+          products: [{ productId: 3, quantity: 1 }]
+        });
+        dialogService.open.and.returnValue({ afterClosed: () => of({ orderData: formValue() }) });
+        management.openAddDialog();
+        expect(orderService.createOrder.calls.mostRecent().args[0].deliveryDate).toBeNull();
+
+        dialogService.open.and.returnValue({ afterClosed: () => of(formValue()) });
+        management.openEditDialog({ id: 1, seller: { id: 2 } });
+        expect(orderService.updateOrder.calls.mostRecent().args[1].deliveryDate).toBeNull();
+      }
+    });
+
+    it('sorts orders without a delivery date after scheduled orders within each delivery status', () => {
+      orderService.getAllOrders.and.returnValue(of([
+        { id: 1, delivered: false, deliveryDate: null },
+        { id: 2, delivered: true, deliveryDate: null },
+        { id: 3, delivered: false, deliveryDate: '2026-11-02' },
+        { id: 4, delivered: true, deliveryDate: '2026-11-01' },
+        { id: 5, delivered: false, deliveryDate: '2026-11-01' },
+        { id: 6, delivered: false, deliveryDate: null }
+      ]));
+      management.loadOrders();
+      expect(management.dataSource.data.map(order => order.id)).toEqual([5, 3, 1, 6, 4, 2]);
+    });
 
     it('filters today using the stored calendar date', () => {
       jasmine.clock().install();
