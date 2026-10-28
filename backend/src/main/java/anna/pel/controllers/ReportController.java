@@ -122,9 +122,28 @@ public class ReportController {
 
     @GetMapping("/daily-cash-register")
     public ResponseEntity<?> getDailyCashRegister(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
-        List<Order> dailyOrders = orderRepository.findByOrderDate(date);
+        if ((startDate == null) != (endDate == null)) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Debe indicar la fecha desde y la fecha hasta."));
+        }
+        if (date == null && startDate == null) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Debe indicar una fecha o un rango de fechas."));
+        }
+        if (date != null && startDate != null) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Indique una fecha o un rango de fechas, no ambos."));
+        }
+        if (startDate != null && endDate.isBefore(startDate)) {
+            return ResponseEntity.badRequest().body(new MessageResponse("La fecha hasta no puede ser anterior a la fecha desde."));
+        }
+
+        LocalDate finalStartDate = startDate != null ? startDate : date;
+        LocalDate finalEndDate = endDate != null ? endDate : date;
+        List<Order> dailyOrders = startDate != null
+                ? orderRepository.findByOrderDateBetween(finalStartDate, finalEndDate)
+                : orderRepository.findByOrderDate(date);
         Map<Product, Integer> productQuantityMap = new HashMap<>();
         Map<Product, Double> productAmountMap = new HashMap<>();
 
@@ -171,7 +190,9 @@ public class ReportController {
         double cashIncome = calculateIncomeByPaymentMethod(dailyOrders, PaymentMethod.CASH);
         double cardIncome = calculateIncomeByPaymentMethod(dailyOrders, PaymentMethod.CARD);
         double transferIncome = calculateIncomeByPaymentMethod(dailyOrders, PaymentMethod.TRANSFER);
-        double totalIncome = cashIncome + cardIncome + transferIncome;
+        double totalIncome = dailyOrders.stream()
+                .mapToDouble(this::calculateNetIncome)
+                .sum();
 
         double grossIncome = dailyOrders.stream()
                 .flatMap(order -> order.getOrderItems().stream())
@@ -186,26 +207,13 @@ public class ReportController {
                 .sum();
 
         double commissionAmount = dailyOrders.stream()
-                .mapToDouble(order -> {
-                    Double discountToApply = order.getCustomDiscount() != null ? order.getCustomDiscount() : 
-                            (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0);
-                    
-                    Double orderTotal = order.getOrderItems().stream()
-                            .mapToDouble(item -> {
-                                Double subtotalWithDiscount = item.getSubtotal();
-                                if (discountToApply > 0) {
-                                    subtotalWithDiscount = item.getSubtotal() * (1 - discountToApply / 100.0);
-                                }
-                                return subtotalWithDiscount;
-                            })
-                            .sum();
-                    
-                    return orderTotal * (order.getSeller().getCommissionPercentage() / 100.0);
-                })
+                .mapToDouble(order -> calculateNetIncome(order) * (order.getSeller().getCommissionPercentage() / 100.0))
                 .sum();
         
         DailyCashRegisterResponse response = new DailyCashRegisterResponse();
-        response.setDate(date);
+        response.setDate(finalStartDate.equals(finalEndDate) ? finalStartDate : null);
+        response.setStartDate(finalStartDate);
+        response.setEndDate(finalEndDate);
         response.setProductsSold(productsSold);
         response.setCashIncome(cashIncome);
         response.setCardIncome(cardIncome);
@@ -222,20 +230,18 @@ public class ReportController {
     }
 
     private double calculateIncomeByPaymentMethod(List<Order> orders, String paymentMethodName) {
-        double total = orders.stream()
+        return orders.stream()
                 .filter(order -> order.getPaymentMethod() != null && 
                         paymentMethodName.equals(order.getPaymentMethod().getName()))
-                .flatMap(order -> order.getOrderItems().stream()
-                        .map(item -> {
-                            Double discountToApply = order.getCustomDiscount() != null ? order.getCustomDiscount() : 
-                                    (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0);
-                            return item.getSubtotal() * (1 - discountToApply / 100.0);
-                        }))
-                .mapToDouble(Double::doubleValue)
+                .mapToDouble(this::calculateNetIncome)
                 .sum();
-        
-        System.out.println("Total calculado para " + paymentMethodName + ": " + total);
-        return total;
+    }
+
+    private double calculateNetIncome(Order order) {
+        double discount = order.getCustomDiscount() != null ? order.getCustomDiscount()
+                : (order.getClient().getDiscount() != null ? order.getClient().getDiscount() : 0.0);
+        double subtotal = order.getOrderItems().stream().mapToDouble(OrderItem::getSubtotal).sum();
+        return discount > 0 ? subtotal * (1 - discount / 100.0) : subtotal;
     }
 
     @GetMapping("/user-sales")
@@ -243,6 +249,13 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+        if ((startDate == null) != (endDate == null)) {
+            return ResponseEntity.badRequest().body(new MessageResponse("Debe indicar la fecha desde y la fecha hasta."));
+        }
+        if (startDate != null && endDate.isBefore(startDate)) {
+            return ResponseEntity.badRequest().body(new MessageResponse("La fecha hasta no puede ser anterior a la fecha desde."));
+        }
 
         LocalDate finalStartDate;
         LocalDate finalEndDate;

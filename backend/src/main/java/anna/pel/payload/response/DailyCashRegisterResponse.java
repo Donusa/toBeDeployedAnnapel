@@ -12,6 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 public class DailyCashRegisterResponse {
     private LocalDate date;
+    private LocalDate startDate;
+    private LocalDate endDate;
     
     // Products sold with quantities
     private List<ProductSoldInfo> productsSold;

@@ -24,9 +24,18 @@ export class ReportService {
      * @returns Observable con la información de la caja diaria
      */
     getDailyCashRegister(date: Date = new Date()): Observable<DailyCashRegisterResponse> {
-        const formattedDate = date.toISOString().split('T')[0];
+        const formattedDate = this.formatLocalDate(date);
         return this.http.get<DailyCashRegisterResponse>(`${this.apiUrl}/api/reports/daily-cash-register`, {
             params: { date: formattedDate }
+        });
+    }
+
+    getCashRegisterByDateRange(startDate: Date, endDate: Date): Observable<DailyCashRegisterResponse> {
+        return this.http.get<DailyCashRegisterResponse>(`${this.apiUrl}/api/reports/daily-cash-register`, {
+            params: {
+                startDate: this.formatLocalDate(startDate),
+                endDate: this.formatLocalDate(endDate)
+            }
         });
     }
 
@@ -41,10 +50,10 @@ export class ReportService {
         let params: any = {};
 
         if (startDate && endDate) {
-            params.startDate = startDate.toISOString().split('T')[0];
-            params.endDate = endDate.toISOString().split('T')[0];
+            params.startDate = this.formatLocalDate(startDate);
+            params.endDate = this.formatLocalDate(endDate);
         } else if (date) {
-            params.date = date.toISOString().split('T')[0];
+            params.date = this.formatLocalDate(date);
         } 
         // else: do not set params, let backend handle default range
 
@@ -61,7 +70,7 @@ export class ReportService {
      * @returns Observable con el ranking de productos
      */
     getProductRanking(period: string, date: Date = new Date()): Observable<ProductRankingResponse[]> {
-        const formattedDate = date.toISOString().split('T')[0];
+        const formattedDate = this.formatLocalDate(date);
         return this.http.get<ProductRankingResponse[]>(`${this.apiUrl}/api/reports/product-ranking`, {
             params: { 
                 period: period,
@@ -71,13 +80,20 @@ export class ReportService {
     }
 
     getProductRankingByDateRange(startDate: Date, endDate: Date): Observable<ProductRankingResponse[]> {
-        const formattedStartDate = startDate.toISOString().split('T')[0];
-        const formattedEndDate = endDate.toISOString().split('T')[0];
+        const formattedStartDate = this.formatLocalDate(startDate);
+        const formattedEndDate = this.formatLocalDate(endDate);
         return this.http.get<ProductRankingResponse[]>(`${this.apiUrl}/api/reports/product-ranking`, {
             params: { 
                 startDate: formattedStartDate,
                 endDate: formattedEndDate 
             }
         });
+    }
+
+    private formatLocalDate(date: Date): string {
+        const year = date.getFullYear().toString().padStart(4, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 }

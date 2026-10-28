@@ -36,12 +36,13 @@
 
 .summary-cards {
   display: flex;
+  flex-wrap: wrap;
   gap: 20px;
   margin-bottom: 30px;
 }
 
 .summary-card {
-  flex: 1;
+  flex: 1 1 220px;
   padding: 15px;
   background-color: #ffffff;
   border-radius: 8px;
@@ -144,6 +145,36 @@
   min-width: 180px;
 }
 
+.cash-range-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.cash-range-controls button {
+  margin-top: 8px;
+}
+
+.cash-period {
+  color: #333333;
+  font-weight: 500;
+}
+
+.cash-description {
+  color: #666666;
+  margin-bottom: 24px;
+}
+
+.cash-error {
+  color: #b3261e;
+}
+
+.empty-sales {
+  padding: 16px;
+  color: #666666;
+}
+
 .ranking-table {
   width: 100%;
   margin-top: 1rem;
@@ -181,6 +212,20 @@
 }
 
 @media (max-width: 768px) {
+  .cash-range-controls {
+    flex-direction: column;
+  }
+
+  .cash-range-controls mat-form-field,
+  .cash-range-controls button {
+    width: 100%;
+  }
+
+  .cash-range-controls button {
+    margin-top: 0;
+    margin-bottom: 16px;
+  }
+
   .ranking-controls {
     flex-direction: column;
   }
@@ -198,7 +243,6 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 60vh;
   margin-top: 30px;
 }
 
@@ -211,6 +255,7 @@
 }
 
 .user-commission .summary-card {
+  flex: 0 1 auto;
   text-align: center;
   padding: 30px;
   background-color: #ffffff;

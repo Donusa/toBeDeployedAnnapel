@@ -4,23 +4,52 @@
       <button mat-icon-button (click)="goToHome()" class="back-button">
         <mat-icon>arrow_back</mat-icon>
       </button>
-      <h2>Caja Diaria</h2>
+      <h2>Caja</h2>
     </div>
   </div>
 
-  <div *ngIf="isAdmin" class="summary-cards">
+  <form class="cash-range-controls" (ngSubmit)="applyCashDateRange()">
+    <mat-form-field appearance="outline">
+      <mat-label>Desde</mat-label>
+      <input matInput name="cashStartDate" [matDatepicker]="cashStartPicker" [(ngModel)]="cashStartDate" required>
+      <mat-datepicker-toggle matSuffix [for]="cashStartPicker"></mat-datepicker-toggle>
+      <mat-datepicker #cashStartPicker></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Hasta</mat-label>
+      <input matInput name="cashEndDate" [matDatepicker]="cashEndPicker" [(ngModel)]="cashEndDate" [min]="cashStartDate" required>
+      <mat-datepicker-toggle matSuffix [for]="cashEndPicker"></mat-datepicker-toggle>
+      <mat-datepicker #cashEndPicker></mat-datepicker>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" type="submit" [disabled]="isLoadingCashRegister">
+      Consultar caja
+    </button>
+  </form>
+
+  <p *ngIf="cashRangeError" class="cash-error" role="alert">{{cashRangeError}}</p>
+  <p *ngIf="cashRegisterError" class="cash-error" role="alert">{{cashRegisterError}}</p>
+  <p *ngIf="isLoadingCashRegister" role="status">Cargando caja del período...</p>
+
+  <section *ngIf="hasCashRegisterData" aria-labelledby="cash-summary-title">
+    <h3 id="cash-summary-title">Caja total de todos los empleados</h3>
+    <p class="cash-period">Del {{appliedCashStartDate | date:'dd/MM/yyyy'}} al {{appliedCashEndDate | date:'dd/MM/yyyy'}}, ambas fechas incluidas.</p>
+    <p class="cash-description">El bruto corresponde a las ventas antes de descuentos. El neto corresponde a las ventas después de descuentos, sin incluir envíos ni restar comisiones.</p>
+
+  <div class="summary-cards">
     <mat-card class="summary-card">
       <mat-card-header>
-        <mat-card-title>Total Ventas Brutas del Día</mat-card-title>
+        <mat-card-title>Total Bruto del Período</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <h3>{{totalDailyGrossSales | currency}}</h3>
       </mat-card-content>
     </mat-card>
 
-    <mat-card class="summary-card">
+    <mat-card class="summary-card" *ngIf="isAdmin">
       <mat-card-header>
-        <mat-card-title>Total Descuentos del Día</mat-card-title>
+        <mat-card-title>Total Descuentos del Período</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <h3>{{totalDailyDiscounts | currency}}</h3>
@@ -29,36 +58,26 @@
 
     <mat-card class="summary-card">
       <mat-card-header>
-        <mat-card-title>Total Ventas Netas del Día</mat-card-title>
+        <mat-card-title>Total Neto del Período</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <h3>{{totalDailyNetSales | currency}}</h3>
       </mat-card-content>
     </mat-card>
 
-    <mat-card class="summary-card">
+    <mat-card class="summary-card" *ngIf="isAdmin">
       <mat-card-header>
-        <mat-card-title>Total Comisiones del Día</mat-card-title>
+        <mat-card-title>Total Comisiones del Período</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <h3>{{totalDailyCommissions | currency}}</h3>
       </mat-card-content>
     </mat-card>
 
-    <mat-card class="summary-card">
-      <mat-card-header>
-        <mat-card-title>Total Comisiones (Periodo)</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <h3>{{totalCommissions | currency}}</h3>
-      </mat-card-content>
-    </mat-card>
   </div>
 
-  <!-- (Revertido) tarjetas públicas removidas -->
-
   <div class="commission-table">
-    <h3>Comisiones por Usuario (Últimos 30 días)</h3>
+    <h3>{{isAdmin ? 'Comisiones por Usuario' : 'Tus Comisiones'}} del Período</h3>
     
     <p class="table-hint">Haga clic en una fila para ver los detalles de ventas</p>
     <mat-table [dataSource]="dataSource" class="mat-elevation-z8">
@@ -90,6 +109,7 @@
       <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
       <mat-row *matRowDef="let row; columns: displayedColumns;" (click)="openSalesDetailsDialog(row)" class="clickable-row"></mat-row>
     </mat-table>
+    <p *ngIf="dataSource.data.length === 0" class="empty-sales">No hay ventas para mostrar en este período.</p>
   </div>
 
   <div *ngIf="!isAdmin" class="user-commission">
@@ -113,6 +133,7 @@
       </mat-card>
     </div>
   </div>
+  </section>
 
   <!-- Product Ranking Section - Solo para Administradores -->
   <div class="product-ranking-section" *ngIf="isAdmin">

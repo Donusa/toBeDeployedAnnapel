@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
@@ -16,8 +16,9 @@ import { AuthenticationService } from 'src/app/services/authentication.service';
 import { MatDialog } from '@angular/material/dialog';
 import { SalesDetailsDialogComponent } from './sales-details-dialog/sales-details-dialog.component';
 import { ReportService } from 'src/app/services/report.service';
-import { DailyCashRegisterResponse } from 'src/responses/dailyCashRegisterResponse.interface';
 import { ProductRankingResponse } from 'src/responses/productRankingResponse.interface';
+import { UserCommissionResponse } from 'src/responses/userCommissionResponse.interface';
+import { forkJoin, Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-cash-register',
@@ -39,29 +40,32 @@ import { ProductRankingResponse } from 'src/responses/productRankingResponse.int
     CurrencyPipe
   ]
 })
-export class CashRegisterComponent implements OnInit {
+export class CashRegisterComponent implements OnInit, OnDestroy {
   displayedColumns: string[] = ['date', 'user', 'gross', 'net', 'commission'];
   dataSource = new MatTableDataSource<any>();
   totalDailyGrossSales: number = 0;
   totalDailyDiscounts: number = 0;
   totalDailyNetSales: number = 0;
   totalDailyCommissions: number = 0;
-  totalCommissions: number = 0;
   isAdmin: boolean = false;
   userCommission: number = 0;
   userSales: number = 0;
-  selectedDate: Date = new Date();
-  userSalesData: any[] = [];
+  cashStartDate: Date | null = new Date();
+  cashEndDate: Date | null = new Date();
+  appliedCashStartDate: Date | null = null;
+  appliedCashEndDate: Date | null = null;
+  cashRangeError: string = '';
+  cashRegisterError: string = '';
+  isLoadingCashRegister: boolean = false;
+  hasCashRegisterData: boolean = false;
+  userSalesData: UserCommissionResponse[] = [];
+  private cashRegisterSubscription?: Subscription;
 
   // Product ranking properties
   productRankingColumns: string[] = ['ranking', 'product', 'quantity', 'orders'];
   productRankingDataSource = new MatTableDataSource<ProductRankingResponse>();
   startDate: Date = new Date();
   endDate: Date = new Date();
-
-  // Commission history properties
-  // commissionStartDate and commissionEndDate removed as we default to last 30 days
-
 
   constructor(
     private reportService: ReportService,
@@ -79,63 +83,84 @@ export class CashRegisterComponent implements OnInit {
   }
 
   loadCashRegisterData(): void {
-    this.reportService.getDailyCashRegister(this.selectedDate).subscribe({
-      next: (response: DailyCashRegisterResponse) => {
+    this.cashRangeError = '';
+    if (!(this.cashStartDate instanceof Date) || isNaN(this.cashStartDate.getTime()) ||
+        !(this.cashEndDate instanceof Date) || isNaN(this.cashEndDate.getTime())) {
+      this.cashRangeError = 'Ingresá una fecha desde y una fecha hasta válidas.';
+      return;
+    }
+
+    const startDate = new Date(this.cashStartDate.getFullYear(), this.cashStartDate.getMonth(), this.cashStartDate.getDate());
+    const endDate = new Date(this.cashEndDate.getFullYear(), this.cashEndDate.getMonth(), this.cashEndDate.getDate());
+    if (endDate < startDate) {
+      this.cashRangeError = 'La fecha hasta debe ser igual o posterior a la fecha desde.';
+      return;
+    }
+
+    this.cashRegisterSubscription?.unsubscribe();
+    this.isLoadingCashRegister = true;
+    this.hasCashRegisterData = false;
+    this.cashRegisterError = '';
+    this.cashRegisterSubscription = forkJoin({
+      cashRegister: this.reportService.getCashRegisterByDateRange(startDate, endDate),
+      userSales: this.reportService.getUserSalesReport(undefined, startDate, endDate)
+    }).subscribe({
+      next: ({ cashRegister: response, userSales }) => {
         this.totalDailyGrossSales = response.grossIncome;
         this.totalDailyDiscounts = response.discountAmount;
         this.totalDailyNetSales = response.netIncome;
         this.totalDailyCommissions = response.commissionAmount;
-        // this.totalCommissions will be calculated in loadUserSalesData for the period
-        this.loadUserSalesData();
+        this.loadUserSalesData(userSales);
+        this.appliedCashStartDate = startDate;
+        this.appliedCashEndDate = endDate;
+        this.isLoadingCashRegister = false;
+        this.hasCashRegisterData = true;
       },
       error: (error) => {
-        this.handleError(error, 'Error al cargar los datos de caja diaria');
+        this.isLoadingCashRegister = false;
+        this.cashRegisterError = 'No se pudo cargar la caja del período. Volvé a intentar.';
+        this.handleError(error, 'Error al cargar los datos de caja del período');
       }
     });
   }
 
-  loadUserSalesData(): void {
-    // Calling without arguments triggers backend default (last month)
-    this.reportService.getUserSalesReport().subscribe({
-      next: (response) => {
-        this.userSalesData = response;
-        
-        let tableData = response.map(userSales => {
-          // calcular bruto como suma de price * quantity sobre todos los orderItems
-          const gross = (userSales.orders || []).reduce((accOrder, order) => {
-            const orderGross = (order.orderItems || []).reduce((accItem, item) => accItem + ((item.price || 0) * (item.quantity || 0)), 0);
-            return accOrder + orderGross;
-          }, 0);
+  applyCashDateRange(): void {
+    this.loadCashRegisterData();
+  }
 
-          return {
-            date: userSales.date,
-            user: userSales.user.username,
-            sales: userSales.totalSales,
-            gross: gross,
-            commission: userSales.totalCommission,
-            details: userSales
-          };
-        });
+  ngOnDestroy(): void {
+    this.cashRegisterSubscription?.unsubscribe();
+  }
 
-        this.totalCommissions = response.reduce((total, userSales) => {
-          return total + (userSales.totalCommission || 0);
-        }, 0);
+  loadUserSalesData(response: UserCommissionResponse[]): void {
+    this.userSalesData = response;
 
-        if (!this.isAdmin) {
-          const currentUser = this.authService.getCurrentUser();
-          tableData = tableData.filter(d => d.details.user.id === currentUser?.id);
-          
-          const mySales = response.filter(sale => sale.user.id === currentUser?.id);
-          this.userCommission = mySales.reduce((acc, curr) => acc + (curr.totalCommission || 0), 0);
-          this.userSales = mySales.reduce((acc, curr) => acc + (curr.totalSales || 0), 0);
-        }
-        
-        this.dataSource.data = tableData;
-      },
-      error: (error) => {
-        this.handleError(error, 'Error al cargar el reporte de ventas por usuario');
-      }
+    let tableData = response.map(userSales => {
+      const gross = (userSales.orders || []).reduce((accOrder, order) => {
+        const orderGross = (order.orderItems || []).reduce((accItem, item) => accItem + ((item.price || 0) * (item.quantity || 0)), 0);
+        return accOrder + orderGross;
+      }, 0);
+
+      return {
+        date: userSales.date,
+        user: userSales.user.username,
+        sales: userSales.totalSales,
+        gross: gross,
+        commission: userSales.totalCommission,
+        details: userSales
+      };
     });
+
+    if (!this.isAdmin) {
+      const currentUser = this.authService.getCurrentUser();
+      tableData = tableData.filter(d => d.details.user.id === currentUser?.id);
+
+      const mySales = response.filter(sale => sale.user.id === currentUser?.id);
+      this.userCommission = mySales.reduce((acc, curr) => acc + (curr.totalCommission || 0), 0);
+      this.userSales = mySales.reduce((acc, curr) => acc + (curr.totalSales || 0), 0);
+    }
+
+    this.dataSource.data = tableData;
   }
 
   checkUserRole(): void {

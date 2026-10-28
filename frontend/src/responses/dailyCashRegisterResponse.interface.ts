@@ -1,6 +1,9 @@
 import { ProductResponse } from "./productResponse.interface";
 
 export interface DailyCashRegisterResponse {
+date?: string;
+startDate?: string;
+endDate?: string;
 productsSold: ProductSoldInfo[];
 cashIncome:number;
 cardIncome:number;
